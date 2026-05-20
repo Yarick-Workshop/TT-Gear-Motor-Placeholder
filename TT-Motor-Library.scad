@@ -1,4 +1,4 @@
-// https://www.adafruit.com/product/3777?srsltid=AfmBOoqMLJOGsyGnY_wVVRmJ1gcOIbeeDKMubqYv-epMCVHgolMwvBRk
+// Drawings from here: https://grabcad.com/library/dc-3v-6v-tt-motor-1
 
 $fn = 64;// TODO, play with it, investigate the artefacts!
 
