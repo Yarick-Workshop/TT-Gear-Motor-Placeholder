@@ -79,6 +79,8 @@ difference()
 
     translate([0, mountingHole_Single_Offset])
 		cylinder(d = mountingHole_Diameter, h = 34, center=true);
+
+    cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
 }
 
 color(wheelShaft_Color)
