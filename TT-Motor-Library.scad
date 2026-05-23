@@ -86,47 +86,52 @@ module dd_shaft(length, diameter, thickness, center = false)
     }
 }
 
-color([0.953, 0.725, 0.263])
-difference()
+module tt_motor_preview()
 {
-    union()
+    color([0.953, 0.725, 0.263])
+    difference()
     {
-        rounded_square_extruded(
-            sx = gearBox_Height,
-            sy = gearBox_Length,
-            h = gearBox_Width,
-            r = gearBox_Corner_Radius
-        );
-
-        translate([0, mountingHoleBox_Length]) 
+        union()
+        {
             rounded_square_extruded(
-                sx = mountingHoleBox_Width,
-                sy = mountingHoleBox_Length,
-                h = mountingHoleBox_Height,
-                r = mountingHoleBox_Corner_Radius);
-        
-        // motor base
-        translate([0, -gearBox_Length, (gearBox_Width - motorBase_Thickness) / 2])
-            rotate([90, 0, 0])
-                dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+                sx = gearBox_Height,
+                sy = gearBox_Length,
+                h = gearBox_Width,
+                r = gearBox_Corner_Radius
+            );
+
+            translate([0, mountingHoleBox_Length]) 
+                rounded_square_extruded(
+                    sx = mountingHoleBox_Width,
+                    sy = mountingHoleBox_Length,
+                    h = mountingHoleBox_Height,
+                    r = mountingHoleBox_Corner_Radius);
+            
+            // motor base
+            translate([0, -gearBox_Length, (gearBox_Width - motorBase_Thickness) / 2])
+                rotate([90, 0, 0])
+                    dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+        }
+
+        translate([0, -mountingHole_Couple_Offset])
+        {
+            translate([mountingHole_Couple_Distance/2, 0])
+                cylinder(d = mountingHole_Diameter, h = 34, center=true);
+            translate([-mountingHole_Couple_Distance/2, 0])
+                cylinder(d = mountingHole_Diameter, h = 34, center=true);
+        }
+
+        translate([0, mountingHole_Single_Offset])
+            cylinder(d = mountingHole_Diameter, h = 34, center=true);
+
+        cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
     }
 
-	translate([0, -mountingHole_Couple_Offset])
-	{
-		translate([mountingHole_Couple_Distance/2, 0])
-			cylinder(d = mountingHole_Diameter, h = 34, center=true);
-		translate([-mountingHole_Couple_Distance/2, 0])
-			cylinder(d = mountingHole_Diameter, h = 34, center=true);
-	}
-
-    translate([0, mountingHole_Single_Offset])
-		cylinder(d = mountingHole_Diameter, h = 34, center=true);
-
-    cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
+    color(wheelShaft_Color)
+        translate([0, -wheelShaft_Offset])
+        {
+            shaft();
+        }
 }
 
-color(wheelShaft_Color)
-    translate([0, -wheelShaft_Offset])
-    {
-        shaft();
-    }
+tt_motor_preview();
