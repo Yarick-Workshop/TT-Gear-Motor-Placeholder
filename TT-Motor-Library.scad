@@ -26,6 +26,8 @@ wheelShaft_Color = "white";//TODO
 wheelShaft_Length = 34;//??? measure
 wheelShaft_Diameter = 5.5;
 wheelShaft_Offset = 11.0;
+wheelShaft_DD_Length = 6;// TODO
+wheelShaft_DD_Thickness = 3;// TODO
 
 module rounded_square_extruded(
     sx,
@@ -47,6 +49,37 @@ module rounded_square_extruded(
                 translate([sx - r_eff, sy - r_eff])
                     circle(r = r_eff);
             }
+}
+
+module shaft()
+{
+    //TODO, add rotation angle!
+    axle_shaft();
+    mirror([0, 0, 1])
+        axle_shaft();
+
+    module axle_shaft()
+    {
+        half_length = wheelShaft_Length / 2;
+        round_part_length = half_length - wheelShaft_DD_Length; 
+
+        cylinder(d = wheelShaft_Diameter, h = round_part_length, center=false);
+
+        translate([0, 0, round_part_length])
+            dd_shaft(length = wheelShaft_DD_Length, diameter = wheelShaft_Diameter, thickness = wheelShaft_DD_Thickness);
+    }
+}
+
+module dd_shaft(length, diameter, thickness, center = false)
+{
+    // TODO, to an external library
+    // TODO, validation of the parameters
+    intersection()
+    {
+        cylinder(d = diameter, h = length, center = center);
+        translate([0, 0, center ? 0 : length/2])
+            cube([diameter + 1, thickness, length + 1], center = true);
+    }
 }
 
 color([0.953, 0.725, 0.263])
@@ -86,5 +119,5 @@ difference()
 color(wheelShaft_Color)
     translate([0, -wheelShaft_Offset])
     {
-        cylinder(d = wheelShaft_Diameter, h = wheelShaft_Length, center=true);
+        shaft();
     }
