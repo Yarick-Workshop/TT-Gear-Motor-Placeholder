@@ -1,4 +1,8 @@
-// Drawings from here: https://grabcad.com/library/dc-3v-6v-tt-motor-1
+/*
+Drawings sources:
+    - TT Gearbox Motor: https://grabcad.com/library/dc-3v-6v-tt-motor-1
+    - 130 motor: https://www.makerstore.com.au/product/elec-130motor-dc6v/
+*/
 
 $fn = 64;// TODO, play with it, investigate the artefacts!
 
@@ -14,9 +18,10 @@ gearBox_Height = 22.44;
 gearBox_Width = 18.7;
 gearBox_Corner_Radius = 3;
 
-/* [Gear Box] */
+/* [Motor] */
 motorBase_Length = 10;//TODO
 motorBase_Thickness = 17;//TODO
+motor_Offset = 65;//TODO
 
 /* [Additional Mounting Hole Box] */
 // ??? measure
@@ -82,7 +87,7 @@ module dd_shaft(length, diameter, thickness, center = false)
     {
         cylinder(d = diameter, h = length, center = center);
         translate([0, 0, center ? 0 : length/2])
-            cube([diameter + 1, thickness, length + 1], center = true);
+            cube([diameter + 1, thickness, length + 0.01], center = true);
     }
 }
 
@@ -100,7 +105,7 @@ module tt_motor_preview()
                 r = gearBox_Corner_Radius
             );
 
-            translate([0, mountingHoleBox_Length]) 
+            translate([0, mountingHoleBox_Length])
                 rounded_square_extruded(
                     sx = mountingHoleBox_Width,
                     sy = mountingHoleBox_Length,
@@ -127,11 +132,78 @@ module tt_motor_preview()
         cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
     }
 
+    // 130 motor
+    translate([0, -motor_Offset, (gearBox_Width - motorBase_Thickness) / 2 /*TODO, generalize*/])
+        rotate([-90, 0, 0])
+            motor130_preview();
+
+    // shaft
     color(wheelShaft_Color)
         translate([0, -wheelShaft_Offset])
         {
             shaft();
         }
+}
+
+// TODO, move to a library
+// TODO, polish!
+module motor130_preview()
+{
+    shaft_length = 36;
+    shaft_diameter = 2;
+
+    plastic_bearing_holder_offset = 1.5;
+    plastic_bearing_holder_diameter = 9.9;
+    plastic_bearing_holder_hight = 2.3;
+    plastic_bearing_holder_thickness = 8.9;// TODO, fix to have D not a cylinder!!!
+
+    motor_body_diameter = 20;
+    motor_body_thickness = 15.1;
+
+    motor_body_plastic_hight = 5;
+
+    motor_body_metal_hight = 15;
+
+    metal_bearing_holder_diameter = 6.1;
+    metal_bearing_holder_high = 1.6;
+
+    // shaft
+    color("silver")
+        cylinder(d = shaft_diameter, h = shaft_length);
+    
+    translate([0, 0, plastic_bearing_holder_offset])
+    {
+        // plastic "bearing"
+        color("blue")// TODO parameter
+            cylinder(d = plastic_bearing_holder_diameter, h = plastic_bearing_holder_hight);
+
+        translate([0, 0, plastic_bearing_holder_hight])
+        {
+            // plastic main body
+            color("blue")// TODO parameter
+                dd_shaft(
+                    length = motor_body_plastic_hight,
+                    diameter = motor_body_diameter,
+                    thickness = motor_body_thickness);
+            
+            translate([0, 0, motor_body_plastic_hight])
+            {
+                // metal main body
+                color("silver")
+                    dd_shaft(
+                    length = motor_body_metal_hight,
+                    diameter = motor_body_diameter,
+                    thickness = motor_body_thickness);
+
+                translate([0, 0, motor_body_metal_hight])
+                {
+                    // metal bearing holder
+                    color("silver")
+                        cylinder(d = metal_bearing_holder_diameter, h = metal_bearing_holder_high);
+                }
+            }
+        }
+    }    
 }
 
 tt_motor_preview();
