@@ -14,6 +14,10 @@ gearBox_Height = 22.44;
 gearBox_Width = 18.7;
 gearBox_Corner_Radius = 3;
 
+/* [Gear Box] */
+motorBase_Length = 10;//TODO
+motorBase_Thickness = 17;//TODO
+
 /* [Additional Mounting Hole Box] */
 // ??? measure
 mountingHoleBox_Length = 5.0;
@@ -100,6 +104,11 @@ difference()
                 sy = mountingHoleBox_Length,
                 h = mountingHoleBox_Height,
                 r = mountingHoleBox_Corner_Radius);
+        
+        // motor base
+        translate([0, -gearBox_Length, (gearBox_Width - motorBase_Thickness) / 2])
+            rotate([90, 0, 0])
+                dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
     }
 
 	translate([0, -mountingHole_Couple_Offset])
