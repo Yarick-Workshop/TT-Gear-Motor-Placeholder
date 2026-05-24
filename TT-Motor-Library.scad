@@ -79,26 +79,102 @@ module shaft()
     }
 }
 
-module dd_shaft(length, diameter, thickness, center = false)
+module round_end_profile_2d(r, h, rb, rt)
+{
+    // R-Z half-profile: rectangles + quarter circles; any rb/rt combination.
+    // rb=0, rt=0 → plain rectangle; rb only / rt only / both → body + end caps.
+    body_h = h - rb - rt;
+
+    union()
+    {
+        if (rb == 0 && rt == 0)
+            square([r, h]);
+        else
+        {
+            if (body_h > 0)
+                translate([0, rb])
+                    square([r, body_h]);
+
+            if (rb > 0)
+            {
+                square([r - rb, rb]);
+                intersection()
+                {
+                    translate([r - rb, rb])
+                        circle(r = rb);
+                    translate([r - rb, 0])
+                        square([rb, rb]);
+                }
+            }
+
+            if (rt > 0)
+            {
+                translate([0, h - rt])
+                    square([r - rt, rt]);
+                intersection()
+                {
+                    translate([r - rt, h - rt])
+                        circle(r = rt);
+                    translate([r - rt, h - rt])
+                        square([rt, rt]);
+                }
+            }
+        }
+    }
+}
+
+module round_end_cylinder(
+    diameter,
+    length,
+    bottom_round_radius = 0,
+    top_round_radius = 0,
+    center = false)
+{
+    r = diameter / 2;
+    rb = bottom_round_radius > 0 ? min(bottom_round_radius, r, length / 2) : 0;
+    rt = top_round_radius > 0 ? min(top_round_radius, r, length / 2) : 0;
+    z0 = center ? -length / 2 : 0;
+
+    translate([0, 0, z0])
+        rotate_extrude()
+            round_end_profile_2d(r, length, rb, rt);
+}
+
+module dd_shaft(
+    length,
+    diameter,
+    thickness,
+    bottom_round_radius = 0,
+    top_round_radius = 0,
+    center = false)
 {
     // TODO, to an external library
     // TODO, validation of the parameters
     intersection()
     {
-        cylinder(d = diameter, h = length, center = center);
+        round_end_cylinder(
+            diameter = diameter,
+            length = length,
+            bottom_round_radius = bottom_round_radius,
+            top_round_radius = top_round_radius,
+            center = center);
         translate([0, 0, center ? 0 : length/2])
             cube([diameter + 1, thickness, length + 0.01], center = true);
     }
 }
 
-module d_shaft(length, diameter, thickness, center = false)
+module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = false)
 {
     // TODO, check and optimize!
     // Single-flat D profile (thickness = flat-to-peak height).
     r = diameter / 2;
     intersection()
     {
-        cylinder(d = diameter, h = length, center = center);
+        round_end_cylinder(
+            diameter = diameter,
+            length = length,
+            bottom_round_radius = bottom_round_radius,
+            center = center);
         translate([-(diameter + 1) / 2, -r + (diameter - thickness), center ? -length/2 : 0])
             cube([diameter + 1, thickness + 0.01, length + 0.01], center = false);
     }
@@ -164,34 +240,46 @@ module motor130_preview()
 {
     shaft_length = 36;
     shaft_diameter = 2;
+    motor_shaft_bottom_round_radius = 0.25;
+    motor_shaft_top_round_radius = 0.25;
 
     plastic_bearing_holder_offset = 1.5;
     plastic_bearing_holder_diameter = 9.9;
     plastic_bearing_holder_hight = 2.3;
     plastic_bearing_holder_thickness = 8.9;
+    plastic_bearing_holder_bottom_round_radius = 0.5;
 
     motor_body_diameter = 20;
     motor_body_thickness = 15.1;
 
     motor_body_plastic_hight = 5;
+    motor_body_plastic_bottom_round_radius = 1.5;
 
     motor_body_metal_hight = 15;
+    motor_body_metal_top_round_radius = 0.5;
 
     metal_bearing_holder_diameter = 6.1;
     metal_bearing_holder_high = 1.6;
+    metal_bearing_holder_top_round_radius = 0.5;
 
     // shaft
     color("silver")
-        cylinder(d = shaft_diameter, h = shaft_length);
+        round_end_cylinder(
+            diameter = shaft_diameter,
+            length = shaft_length,
+            bottom_round_radius = motor_shaft_bottom_round_radius,
+            top_round_radius = motor_shaft_top_round_radius);
     
     translate([0, 0, plastic_bearing_holder_offset])
     {
-        // plastic "bearing"
+        // plastic "bearing" (flat on +Y, opposite of default d_shaft)
         color("blue")// TODO parameter
-            d_shaft(
-                length = plastic_bearing_holder_hight,
-                diameter = plastic_bearing_holder_diameter,
-                thickness = plastic_bearing_holder_thickness);
+            mirror([0, 1, 0])
+                d_shaft(
+                    length = plastic_bearing_holder_hight,
+                    diameter = plastic_bearing_holder_diameter,
+                    thickness = plastic_bearing_holder_thickness,
+                    bottom_round_radius = plastic_bearing_holder_bottom_round_radius);
 
         translate([0, 0, plastic_bearing_holder_hight])
         {
@@ -200,22 +288,27 @@ module motor130_preview()
                 dd_shaft(
                     length = motor_body_plastic_hight,
                     diameter = motor_body_diameter,
-                    thickness = motor_body_thickness);
+                    thickness = motor_body_thickness,
+                    bottom_round_radius = motor_body_plastic_bottom_round_radius);
             
             translate([0, 0, motor_body_plastic_hight])
             {
                 // metal main body
                 color("silver")
                     dd_shaft(
-                    length = motor_body_metal_hight,
-                    diameter = motor_body_diameter,
-                    thickness = motor_body_thickness);
+                        length = motor_body_metal_hight,
+                        diameter = motor_body_diameter,
+                        thickness = motor_body_thickness,
+                        top_round_radius = motor_body_metal_top_round_radius);
 
                 translate([0, 0, motor_body_metal_hight])
                 {
                     // metal bearing holder
                     color("silver")
-                        cylinder(d = metal_bearing_holder_diameter, h = metal_bearing_holder_high);
+                        round_end_cylinder(
+                            diameter = metal_bearing_holder_diameter,
+                            length = metal_bearing_holder_high,
+                            top_round_radius = metal_bearing_holder_top_round_radius);
                 }
             }
         }
