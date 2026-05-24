@@ -91,6 +91,19 @@ module dd_shaft(length, diameter, thickness, center = false)
     }
 }
 
+module d_shaft(length, diameter, thickness, center = false)
+{
+    // TODO, check and optimize!
+    // Single-flat D profile (thickness = flat-to-peak height).
+    r = diameter / 2;
+    intersection()
+    {
+        cylinder(d = diameter, h = length, center = center);
+        translate([-(diameter + 1) / 2, -r + (diameter - thickness), center ? -length/2 : 0])
+            cube([diameter + 1, thickness + 0.01, length + 0.01], center = false);
+    }
+}
+
 module tt_motor_preview()
 {
     color([0.953, 0.725, 0.263])
@@ -155,7 +168,7 @@ module motor130_preview()
     plastic_bearing_holder_offset = 1.5;
     plastic_bearing_holder_diameter = 9.9;
     plastic_bearing_holder_hight = 2.3;
-    plastic_bearing_holder_thickness = 8.9;// TODO, fix to have D not a cylinder!!!
+    plastic_bearing_holder_thickness = 8.9;
 
     motor_body_diameter = 20;
     motor_body_thickness = 15.1;
@@ -175,7 +188,10 @@ module motor130_preview()
     {
         // plastic "bearing"
         color("blue")// TODO parameter
-            cylinder(d = plastic_bearing_holder_diameter, h = plastic_bearing_holder_hight);
+            d_shaft(
+                length = plastic_bearing_holder_hight,
+                diameter = plastic_bearing_holder_diameter,
+                thickness = plastic_bearing_holder_thickness);
 
         translate([0, 0, plastic_bearing_holder_hight])
         {
@@ -206,4 +222,5 @@ module motor130_preview()
     }    
 }
 
-tt_motor_preview();
+rotate([0, 90, 180])
+    tt_motor_preview();
