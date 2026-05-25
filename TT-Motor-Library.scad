@@ -322,12 +322,12 @@ module motor130_preview()
 belt_Thickness = 0.9;
 belt_Center_Diameter = 15.1;
 belt_Width = 8;
-belt_Offset_Length = 22;// TODO, temp and ot correct, it has to be calculated!
+belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
 
-belt_Loop_Width = 11.8;
-belt_Loop_Length = 10.3;
-belt_Loop_Hole_Width = 8;
-belt_Loop_Hole_Length = 5;
+belt_Buckle_Width = 11.8;
+belt_Buckle_Length = 10.3;
+belt_Buckle_Hole_Width = 8;
+belt_Buckle_Hole_Length = 5;
 
 rotate([0, 90, 180])
 {
@@ -345,52 +345,52 @@ module belt()
     translate([0, -motor_Offset + 1.5 + 2.3 - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
         rotate([-90, 0, 0])
         {
+            // round part
             cylinder(d = belt_Center_Diameter, h = belt_Thickness);
 
             rotate([-90, 0, 90])
             {
+                // belt strap
                 difference()
                 {
                     rounded_square_extruded(
                         sx = motorBase_Thickness + 2 * belt_Thickness,
-                        sy = belt_Offset_Length - belt_Loop_Length + 0.01,
+                        sy = belt_Offset_Length - belt_Buckle_Length + 0.01,
                         h = belt_Width,
                         r = 1);
                     translate([0, - belt_Thickness - 0.01])
                         rounded_square_extruded(
                             sx = motorBase_Thickness,
-                            sy = belt_Offset_Length - belt_Loop_Length - belt_Thickness + 0.01 + 0.01,
+                            sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 0.01 + 0.01,
                             h = belt_Width + 0.01,
                             r = 1);
                 }
 
-               belt_loop();
-               
-               translate([-(motorBase_Thickness + belt_Thickness), 0])
-                belt_loop();
+                // belt buckles
+                belt_buckle();
+                
+                translate([-(motorBase_Thickness + belt_Thickness), 0])
+                    belt_buckle();
             }
         }
-}
 
-
-
-module belt_loop()
-{
-    // loop tab at the far end of the strap
-    translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length])
-        rotate([0, 90, 180])
-            difference()
-            {
-                rounded_square_extruded(
-                    sx = belt_Loop_Width,
-                    sy = belt_Loop_Length,
-                    h = belt_Thickness,
-                    r = 1);
-                translate([0, -(belt_Loop_Length - belt_Loop_Hole_Length) / 2, -0.03])
+    module belt_buckle()
+    {
+        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length])
+            rotate([0, 90, 180])
+                difference()
+                {
                     rounded_square_extruded(
-                        sx = belt_Loop_Hole_Width,
-                        sy = belt_Loop_Hole_Length,
-                        h = belt_Thickness + 0.1,
+                        sx = belt_Buckle_Width,
+                        sy = belt_Buckle_Length,
+                        h = belt_Thickness,
                         r = 1);
-            }
+                    translate([0, -(belt_Buckle_Length - belt_Buckle_Hole_Length) / 2, -0.03])
+                        rounded_square_extruded(
+                            sx = belt_Buckle_Hole_Width,
+                            sy = belt_Buckle_Hole_Length,
+                            h = belt_Thickness + 0.1,
+                            r = 1);
+                }
+    }
 }
