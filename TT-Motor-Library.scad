@@ -48,7 +48,7 @@ module rounded_square_extruded(
     r)
 {
 	//TODO, refactor
-    r_eff = min(r, sx / 2 - 0.01, sy / 2 - 0.01);
+    r_eff = min(r, sx / 2, sy / 2);
 
     linear_extrude(height = h, center = true)
         translate([-sx / 2, -sy])
@@ -320,7 +320,9 @@ module motor130_preview()
 
 // measured:
 belt_Thickness = 0.9;
+//TODO, rename both!
 belt_Center_Diameter = 15.1;
+belt_Center_Internal_Diameter = 10.5;
 belt_Width = 8;
 belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
 
@@ -346,7 +348,11 @@ module belt()
         rotate([-90, 0, 0])
         {
             // round part
-            cylinder(d = belt_Center_Diameter, h = belt_Thickness);
+            difference()
+            {
+                cylinder(d = belt_Center_Diameter, h = belt_Thickness);
+                cylinder(d = belt_Center_Internal_Diameter, h = belt_Thickness);
+            }
 
             rotate([-90, 0, 90])
             {
@@ -355,15 +361,17 @@ module belt()
                 {
                     rounded_square_extruded(
                         sx = motorBase_Thickness + 2 * belt_Thickness,
-                        sy = belt_Offset_Length - belt_Buckle_Length + 0.01,
+                        sy = belt_Offset_Length - belt_Buckle_Length,
                         h = belt_Width,
                         r = 1);
-                    translate([0, - belt_Thickness - 0.01])
+                    translate([0, - belt_Thickness + 0.01])
                         rounded_square_extruded(
                             sx = motorBase_Thickness,
-                            sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 0.01 + 0.01,
-                            h = belt_Width + 0.01,
+                            sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 1,
+                            h = belt_Width,
                             r = 1);
+                    rotate([90, 0])
+                        cylinder(d = belt_Center_Internal_Diameter, h = belt_Thickness);
                 }
 
                 // belt buckles
@@ -376,7 +384,7 @@ module belt()
 
     module belt_buckle()
     {
-        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length])
+        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length + 0.01])
             rotate([0, 90, 180])
                 difference()
                 {
@@ -385,11 +393,11 @@ module belt()
                         sy = belt_Buckle_Length,
                         h = belt_Thickness,
                         r = 1);
-                    translate([0, -(belt_Buckle_Length - belt_Buckle_Hole_Length) / 2, -0.03])
+                    translate([0, -(belt_Buckle_Length - belt_Buckle_Hole_Length) / 2])
                         rounded_square_extruded(
                             sx = belt_Buckle_Hole_Width,
                             sy = belt_Buckle_Hole_Length,
-                            h = belt_Thickness + 0.1,
+                            h = belt_Thickness,
                             r = 1);
                 }
     }
