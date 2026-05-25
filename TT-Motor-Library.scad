@@ -353,13 +353,13 @@ module belt()
                 {
                     rounded_square_extruded(
                         sx = motorBase_Thickness + 2 * belt_Thickness,
-                        sy = belt_Offset_Length - belt_Loop_Length,
+                        sy = belt_Offset_Length - belt_Loop_Length + 0.01,
                         h = belt_Width,
                         r = 1);
                     translate([0, - belt_Thickness - 0.01])
                         rounded_square_extruded(
                             sx = motorBase_Thickness,
-                            sy = belt_Offset_Length - belt_Loop_Length - belt_Thickness + 0.01,
+                            sy = belt_Offset_Length - belt_Loop_Length - belt_Thickness + 0.01 + 0.01,
                             h = belt_Width + 0.01,
                             r = 1);
                 }
