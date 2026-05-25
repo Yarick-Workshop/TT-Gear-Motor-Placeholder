@@ -318,32 +318,21 @@ module motor130_preview()
     }    
 }
 
-// measured:
-belt_Thickness = 0.9;
-//TODO, rename both!
-belt_Center_Diameter = 15.1;
-belt_Center_Internal_Diameter = 10.5;
-belt_Width = 8;
-belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
-
-belt_Buckle_Width = 11.8;
-belt_Buckle_Length = 10.3;
-belt_Buckle_Hole_Width = 8;
-belt_Buckle_Hole_Length = 5;
-
-rotate([0, 90, 180])
-{
-    tt_motor_preview();
-
-    color("gray", 0.5)
-    {
-        render()      
-            belt();
-    }
-}
-
 module belt()
 {
+    // measured:
+    belt_Thickness = 0.9;
+    //TODO, rename both!
+    belt_Center_Diameter = 15.1;
+    belt_Center_Internal_Diameter = 10.5;
+    belt_Width = 8;
+    belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
+
+    belt_Buckle_Width = 11.8;
+    belt_Buckle_Length = 10.3;
+    belt_Buckle_Hole_Width = 8;
+    belt_Buckle_Hole_Length = 5;
+
     translate([0, -motor_Offset + 1.5 + 2.3 - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
         rotate([-90, 0, 0])
         {
@@ -400,5 +389,23 @@ module belt()
                             h = belt_Thickness,
                             r = 1);
                 }
+    }
+}
+
+rotate([0, 90, 180])
+{
+    tt_motor_preview();
+
+    color("gray", 0.5)
+    {
+        if ($preview)
+        {
+            render()
+                belt();
+        }
+        else
+        {
+            belt();
+        }
     }
 }
