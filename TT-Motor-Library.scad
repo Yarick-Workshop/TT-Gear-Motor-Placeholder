@@ -238,6 +238,17 @@ module tt_motor_preview()
         {
             shaft();
         }
+
+    color("gray", 0.5)
+        if ($preview)
+        {
+            render()
+                belt();
+        }
+        else
+        {
+            belt();
+        }
 }
 
 // TODO, move to a library
@@ -352,14 +363,14 @@ module belt()
                 difference()
                 {
                     rounded_square_extruded(
-                        sx = motorBase_Thickness + 2 * belt_Thickness,
-                        sy = belt_Offset_Length - belt_Buckle_Length,
+                        sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON,
+                        sy = belt_Offset_Length - belt_Buckle_Length + 2 * EPSILON,
                         h = belt_Width,
                         r = 1);
                     translate([0, - belt_Thickness + EPSILON])
                         rounded_square_extruded(
-                            sx = motorBase_Thickness,
-                            sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 1,
+                            sx = motorBase_Thickness + EPSILON,
+                            sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 4 * EPSILON,
                             h = belt_Width,
                             r = 1);
                     rotate([90, 0])
@@ -369,14 +380,14 @@ module belt()
                 // belt buckles
                 belt_buckle();
                 
-                translate([-(motorBase_Thickness + belt_Thickness), 0])
+                mirror([1, 0, 0])
                     belt_buckle();
             }
         }
 
     module belt_buckle()
     {
-        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length + EPSILON])
+        translate([motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2, -belt_Offset_Length])
             rotate([0, 90, 180])
                 difference()
                 {
@@ -397,19 +408,4 @@ module belt()
 
 // the main rendering part
 rotate([0, 90, 180])
-{
     tt_motor_preview();
-
-    color("gray", 0.5)
-    {
-        if ($preview)
-        {
-            render()
-                belt();
-        }
-        else
-        {
-            belt();
-        }
-    }
-}
