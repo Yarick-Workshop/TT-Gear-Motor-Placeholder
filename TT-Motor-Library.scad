@@ -38,6 +38,9 @@ wheelShaft_Offset = 11.0;
 wheelShaft_DD_Length = 6;// TODO
 wheelShaft_DD_Thickness = 3;// TODO
 
+/* [Hidden] */
+EPSILON = 0.01;
+
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
 
@@ -162,7 +165,7 @@ module dd_shaft(
             top_round_radius = top_round_radius,
             center = center);
         translate([0, 0, center ? 0 : length/2])
-            cube([diameter + 1, thickness, length + 0.01], center = true);
+            cube([diameter + 1, thickness, length + EPSILON], center = true);
     }
 }
 
@@ -179,7 +182,7 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
             bottom_round_radius = bottom_round_radius,
             center = center);
         translate([-(diameter + 1) / 2, -r + (diameter - thickness), center ? -length/2 : 0])
-            cube([diameter + 1, thickness + 0.01, length + 0.01], center = false);
+            cube([diameter + 1, thickness + EPSILON, length + EPSILON], center = false);
     }
 }
 
@@ -353,7 +356,7 @@ module belt()
                         sy = belt_Offset_Length - belt_Buckle_Length,
                         h = belt_Width,
                         r = 1);
-                    translate([0, - belt_Thickness + 0.01])
+                    translate([0, - belt_Thickness + EPSILON])
                         rounded_square_extruded(
                             sx = motorBase_Thickness,
                             sy = belt_Offset_Length - belt_Buckle_Length - belt_Thickness + 1,
@@ -373,7 +376,7 @@ module belt()
 
     module belt_buckle()
     {
-        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length + 0.01])
+        translate([motorBase_Thickness / 2 + belt_Thickness / 2, -belt_Offset_Length + EPSILON])
             rotate([0, 90, 180])
                 difference()
                 {
@@ -392,6 +395,7 @@ module belt()
     }
 }
 
+// the main rendering part
 rotate([0, 90, 180])
 {
     tt_motor_preview();
