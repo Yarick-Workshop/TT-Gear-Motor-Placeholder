@@ -38,6 +38,19 @@ wheelShaft_Offset = 11.0;
 wheelShaft_DD_Length = 6;// TODO
 wheelShaft_DD_Thickness = 3;// TODO
 
+/* [Belt] */
+// measured:
+belt_Thickness = 0.9;
+belt_Ring_External_Diameter = 15.1;
+belt_Ring_Internal_Diameter = 10.5;
+belt_Width = 8;
+belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
+
+belt_Buckle_Width = 11.8;
+belt_Buckle_Length = 10.3;
+belt_Buckle_Hole_Width = 8;
+belt_Buckle_Hole_Length = 5;
+
 /* [Hidden] */
 EPSILON = 0.01;
 
@@ -188,7 +201,7 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
 
 module tt_motor_preview()
 {
-    color([0.953, 0.725, 0.263])
+    color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
     difference()
     {
         union()
@@ -334,18 +347,6 @@ module motor130_preview()
 
 module belt()
 {
-    // measured:
-    belt_Thickness = 0.9;
-    belt_Ring_External_Diameter = 15.1;
-    belt_Ring_Internal_Diameter = 10.5;
-    belt_Width = 8;
-    belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
-
-    belt_Buckle_Width = 11.8;
-    belt_Buckle_Length = 10.3;
-    belt_Buckle_Hole_Width = 8;
-    belt_Buckle_Hole_Length = 5;
-
     translate([0, -motor_Offset + 3.8 /*TODO, move to a parameter*/ - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
         rotate([-90, 0, 0])
         {
