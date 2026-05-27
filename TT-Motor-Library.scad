@@ -4,7 +4,7 @@ Drawings sources:
     - 130 motor: https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
-$fn = 64;// TODO, play with it, investigate the artefacts!
+$fn = 64;// TODO, play with it, investigate the artifacts!
 
 /* [Mounting Holes] */
 mountingHole_Diameter = 2.8;
@@ -242,7 +242,7 @@ module tt_motor_preview()
     color("gray", 0.5)
         if ($preview)
         {
-            render()
+            render() // to get rid of artifacts, TODO try another way to speed-up
                 belt();
         }
         else
@@ -336,9 +336,8 @@ module belt()
 {
     // measured:
     belt_Thickness = 0.9;
-    //TODO, rename both!
-    belt_Center_Diameter = 15.1;
-    belt_Center_Internal_Diameter = 10.5;
+    belt_Ring_External_Diameter = 15.1;
+    belt_Ring_Internal_Diameter = 10.5;
     belt_Width = 8;
     belt_Offset_Length = 22;// TODO, temp and not correct, it has to be calculated!
 
@@ -347,14 +346,14 @@ module belt()
     belt_Buckle_Hole_Width = 8;
     belt_Buckle_Hole_Length = 5;
 
-    translate([0, -motor_Offset + 1.5 + 2.3 - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
+    translate([0, -motor_Offset + 3.8 /*TODO, move to a parameter*/ - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
         rotate([-90, 0, 0])
         {
             // round part
             difference()
             {
-                cylinder(d = belt_Center_Diameter, h = belt_Thickness);
-                cylinder(d = belt_Center_Internal_Diameter, h = belt_Thickness);
+                cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
+                cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
             }
 
             rotate([-90, 0, 90])
@@ -374,7 +373,7 @@ module belt()
                             h = belt_Width,
                             r = 1);
                     rotate([90, 0])
-                        cylinder(d = belt_Center_Internal_Diameter, h = belt_Thickness);
+                        cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
                 }
 
                 // belt buckles
