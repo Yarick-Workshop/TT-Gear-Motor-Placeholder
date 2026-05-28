@@ -4,7 +4,7 @@ Drawings sources:
     - 130 motor: https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
-$fn = 64;// TODO, play with it, investigate the artefacts!
+$fn = 64;// TODO, play with it, investigate the artifacts!
 
 /* [Mounting Holes] */
 mountingHole_Diameter = 2.8;
@@ -38,6 +38,28 @@ wheelShaft_Offset = 11.0;
 wheelShaft_DD_Length = 6;// TODO
 wheelShaft_DD_Thickness = 3;// TODO
 
+/* [Belt] */
+// measured:
+belt_Thickness = 0.9;
+belt_Ring_External_Diameter = 15.1;
+belt_Ring_Internal_Diameter = 10.5;
+belt_Width = 8;
+belt_Offset_To_Buckle = 22;// TODO, it has to be auto-calculated instead!
+belt_From_Motor_Bottom_Offset = 3.8;//TODO, do we need it?
+
+belt_Buckle_Width = 11.8;
+belt_Buckle_Length = 10.3;
+belt_Buckle_Corner_Radius = 1;
+belt_Buckle_Hole_Width = 8;
+belt_Buckle_Hole_Length = 5;
+belt_Buckle_Hole_Corner_Radius = 1;
+
+/* [Hidden] */
+EPSILON = 0.01;
+
+// pre-calculated values
+motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
+
 module rounded_square_extruded(
     sx,
     sy,
@@ -45,7 +67,7 @@ module rounded_square_extruded(
     r)
 {
 	//TODO, refactor
-    r_eff = min(r, sx / 2 - 0.01, sy / 2 - 0.01);
+    r_eff = min(r, sx / 2, sy / 2);
 
     linear_extrude(height = h, center = true)
         translate([-sx / 2, -sy])
@@ -159,7 +181,7 @@ module dd_shaft(
             top_round_radius = top_round_radius,
             center = center);
         translate([0, 0, center ? 0 : length/2])
-            cube([diameter + 1, thickness, length + 0.01], center = true);
+            cube([diameter + 1, thickness, length + EPSILON], center = true);
     }
 }
 
@@ -176,13 +198,13 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
             bottom_round_radius = bottom_round_radius,
             center = center);
         translate([-(diameter + 1) / 2, -r + (diameter - thickness), center ? -length/2 : 0])
-            cube([diameter + 1, thickness + 0.01, length + 0.01], center = false);
+            cube([diameter + 1, thickness + EPSILON, length + EPSILON], center = false);
     }
 }
 
 module tt_motor_preview()
 {
-    color([0.953, 0.725, 0.263])
+    color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
     difference()
     {
         union()
@@ -202,7 +224,7 @@ module tt_motor_preview()
                     r = mountingHoleBox_Corner_Radius);
             
             // motor base
-            translate([0, -gearBox_Length, (gearBox_Width - motorBase_Thickness) / 2])
+            translate([0, -gearBox_Length, motor_Side_Offset])
                 rotate([90, 0, 0])
                     dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
         }
@@ -222,7 +244,7 @@ module tt_motor_preview()
     }
 
     // 130 motor
-    translate([0, -motor_Offset, (gearBox_Width - motorBase_Thickness) / 2 /*TODO, generalize*/])
+    translate([0, -motor_Offset, motor_Side_Offset])
         rotate([-90, 0, 0])
             motor130_preview();
 
@@ -232,6 +254,19 @@ module tt_motor_preview()
         {
             shaft();
         }
+
+    color("gray", 0.5)
+        translate([0, -motor_Offset + belt_From_Motor_Bottom_Offset - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
+            rotate([-90, 0, 0])
+                if ($preview)
+                {
+                    render() // to get rid of artifacts, TODO try another way to speed-up
+                        belt();
+                }
+                else
+                {
+                    belt();
+                }
 }
 
 // TODO, move to a library
@@ -315,5 +350,75 @@ module motor130_preview()
     }    
 }
 
+module belt()
+{
+    assert(belt_Thickness > 0, "belt_Thickness must be positive");
+    assert(belt_Width > 0, "belt_Width must be positive");
+    assert(
+        belt_Ring_Internal_Diameter > belt_Ring_External_Diameter,
+        "belt_Ring_Internal_Diameter must be less than belt_Ring_External_Diameter");
+    assert(
+        belt_Buckle_Hole_Width < belt_Buckle_Width,
+        "belt_Buckle_Hole_Width must be less than belt_Buckle_Width");
+    assert(
+        belt_Buckle_Hole_Length < belt_Buckle_Length,
+        "belt_Buckle_Hole_Length must be less than belt_Buckle_Length");
+
+    // ring 
+    difference()
+    {
+        cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
+        cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
+    }
+
+    rotate([-90, 0, 90])
+    {
+        // belt strap
+        difference()
+        {
+            rounded_square_extruded(
+                sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON,
+                sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON,
+                h = belt_Width,
+                r = belt_Buckle_Corner_Radius);
+            translate([0, - belt_Thickness + EPSILON])
+                rounded_square_extruded(
+                    sx = motorBase_Thickness + EPSILON,
+                    sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 4 * EPSILON,
+                    h = belt_Width,
+                    r = belt_Buckle_Corner_Radius);
+            rotate([90, 0])
+                cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
+        }
+
+        // belt buckles
+        belt_buckle();
+        
+        mirror([1, 0, 0])
+            belt_buckle();
+    }
+
+    module belt_buckle()
+    {
+        translate([motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2, -belt_Offset_To_Buckle])
+            rotate([0, 90, 180])
+                difference()
+                {
+                    rounded_square_extruded(
+                        sx = belt_Buckle_Width,
+                        sy = belt_Buckle_Length,
+                        h = belt_Thickness,
+                        r = belt_Buckle_Corner_Radius);
+                    translate([0, -(belt_Buckle_Length - belt_Buckle_Hole_Length) / 2])
+                        rounded_square_extruded(
+                            sx = belt_Buckle_Hole_Width,
+                            sy = belt_Buckle_Hole_Length,
+                            h = belt_Thickness,
+                            r = belt_Buckle_Hole_Corner_Radius);
+                }
+    }
+}
+
+// the main rendering part
 rotate([0, 90, 180])
     tt_motor_preview();
