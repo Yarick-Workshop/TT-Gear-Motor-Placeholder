@@ -1,6 +1,8 @@
 /*
 Drawings sources:
-    - TT Gearbox Motor: https://grabcad.com/library/dc-3v-6v-tt-motor-1
+    - TT Gearbox Motor: 
+        - https://grabcad.com/library/dc-3v-6v-tt-motor-1
+        - https://www.adafruit.com/product/3777
     - 130 motor: https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
@@ -19,7 +21,7 @@ gearBox_Width = 18.7;
 gearBox_Corner_Radius = 3;
 
 /* [Motor] */
-motorBase_Length = 10;//TODO
+motorBase_Length = 11.2;//OK!!!
 motorBase_Thickness = 17;//TODO
 motor_Offset = 65;//TODO
 
@@ -44,7 +46,7 @@ belt_Thickness = 0.9;
 belt_Ring_External_Diameter = 15.1;
 belt_Ring_Internal_Diameter = 10.5;
 belt_Width = 8;
-belt_Offset_To_Buckle = 22.7;// TODO, it has to be auto-calculated instead!
+belt_Offset_To_Buckle = 21.55;// TODO, it has to be auto-calculated instead!
 belt_From_Motor_Bottom_Offset = 3.8;//TODO, do we need it?
 
 belt_Buckle_Width = 11.8;
@@ -62,6 +64,8 @@ hook_Bottom_Side_Thickness = 1.5;
 hook_Internal_Height = 1.5;
 hook_Internal_Width = 1.5;
 hook_Depth = 5;
+hook_Cave_Width = 2;
+hook_Cave_Length = 6;
 
 /* [Hidden] */
 EPSILON = 0.01;
@@ -235,10 +239,15 @@ module tt_motor_preview()
             // motor base
             translate([0, -gearBox_Length, motor_Side_Offset])
             {
-                rotate([90, 0, 0])
-                    dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+                difference()
+                {
+                    rotate([90, 0, 0])
+                        dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+                    
+                    motor_base_hook_cave();
+                }
 
-                   motor_base_hooks();
+                motor_base_hooks();
             }
         }
 
@@ -443,6 +452,20 @@ module hook()
             [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
             [hook_Bottom_Side_Thickness, 0]
         ]);
+}
+
+module motor_base_hook_cave()
+{
+    motor_base_y = -motorBase_Length + hook_Offset + hook_Cave_Width / 2;
+
+    translate([0, motor_base_y])
+        cube(
+            [
+                hook_Cave_Length,
+                hook_Cave_Width,
+                motorBase_Thickness + EPSILON
+            ],
+            center = true);
 }
 
 module motor_base_hooks()
