@@ -238,17 +238,7 @@ module tt_motor_preview()
             
             // motor base
             translate([0, -gearBox_Length, motor_Side_Offset])
-            {
-                difference()
-                {
-                    rotate([90, 0, 0])
-                        dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
-                    
-                    motor_base_hook_cave();
-                }
-
-                motor_base_hooks();
-            }
+                motor_mounting_part();
         }
 
         translate([0, -mountingHole_Couple_Offset])
@@ -454,29 +444,36 @@ module hook()
         ]);
 }
 
-module motor_base_hook_cave()
-{
-    motor_base_y = -motorBase_Length + hook_Offset + hook_Cave_Width / 2;
-
-    translate([0, motor_base_y])
-        cube(
-            [
-                hook_Cave_Length,
-                hook_Cave_Width,
-                motorBase_Thickness + EPSILON
-            ],
-            center = true);
-}
-
-module motor_base_hooks()
+module motor_mounting_part()
 {
     motor_base_y = -motorBase_Length + hook_Offset;
     flat_z = motorBase_Thickness / 2;
 
-    hook_placed();
+    difference()
+    {
+        union()
+        {
+            rotate([90, 0, 0])
+                dd_shaft(
+                    length = motorBase_Length,
+                    diameter = gearBox_Height,
+                    thickness = motorBase_Thickness,
+                    center = false);
 
-    mirror([0, 0, 1])
-        hook_placed();
+            hook_placed();
+            mirror([0, 0, 1])
+                hook_placed();
+        }
+
+        translate([0, motor_base_y + hook_Cave_Width / 2])
+            cube(
+                [
+                    hook_Cave_Length,
+                    hook_Cave_Width,
+                    motorBase_Thickness + EPSILON
+                ],
+                center = true);
+    }
 
     module hook_placed()
     {
