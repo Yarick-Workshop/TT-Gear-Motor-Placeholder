@@ -44,7 +44,7 @@ belt_Thickness = 0.9;
 belt_Ring_External_Diameter = 15.1;
 belt_Ring_Internal_Diameter = 10.5;
 belt_Width = 8;
-belt_Offset_To_Buckle = 22;// TODO, it has to be auto-calculated instead!
+belt_Offset_To_Buckle = 22.7;// TODO, it has to be auto-calculated instead!
 belt_From_Motor_Bottom_Offset = 3.8;//TODO, do we need it?
 
 belt_Buckle_Width = 11.8;
@@ -53,6 +53,15 @@ belt_Buckle_Corner_Radius = 1;
 belt_Buckle_Hole_Width = 8;
 belt_Buckle_Hole_Length = 5;
 belt_Buckle_Hole_Corner_Radius = 1;
+
+/* [Hook] */
+hook_Offset = 5;// from motor face (Y)
+hook_Top_Thickness = 0.8;
+hook_Top_Side_Thickness = 0.4;
+hook_Bottom_Side_Thickness = 1.5;
+hook_Internal_Height = 1.5;
+hook_Internal_Width = 1.5;
+hook_Depth = 5;
 
 /* [Hidden] */
 EPSILON = 0.01;
@@ -225,8 +234,12 @@ module tt_motor_preview()
             
             // motor base
             translate([0, -gearBox_Length, motor_Side_Offset])
+            {
                 rotate([90, 0, 0])
                     dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+
+                   motor_base_hooks();
+            }
         }
 
         translate([0, -mountingHole_Couple_Offset])
@@ -355,7 +368,7 @@ module belt()
     assert(belt_Thickness > 0, "belt_Thickness must be positive");
     assert(belt_Width > 0, "belt_Width must be positive");
     assert(
-        belt_Ring_Internal_Diameter > belt_Ring_External_Diameter,
+        belt_Ring_Internal_Diameter < belt_Ring_External_Diameter,
         "belt_Ring_Internal_Diameter must be less than belt_Ring_External_Diameter");
     assert(
         belt_Buckle_Hole_Width < belt_Buckle_Width,
@@ -416,6 +429,37 @@ module belt()
                             h = belt_Thickness,
                             r = belt_Buckle_Hole_Corner_Radius);
                 }
+    }
+}
+
+module hook()
+{
+    linear_extrude(height = hook_Depth, center = true)
+        polygon(points = [
+            [0, 0],
+            [0, hook_Internal_Height],
+            [-hook_Internal_Width, hook_Internal_Height],
+            [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
+            [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
+            [hook_Bottom_Side_Thickness, 0]
+        ]);
+}
+
+module motor_base_hooks()
+{
+    motor_base_y = -motorBase_Length + hook_Offset;
+    flat_z = motorBase_Thickness / 2;
+
+    hook_placed();
+
+    mirror([0, 0, 1])
+        hook_placed();
+
+    module hook_placed()
+    {
+        translate([0, motor_base_y, flat_z])
+            rotate([90, 0, -90])
+                hook();
     }
 }
 
