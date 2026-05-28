@@ -352,7 +352,19 @@ module motor130_preview()
 
 module belt()
 {
-    // round part
+    assert(belt_Thickness > 0, "belt_Thickness must be positive");
+    assert(belt_Width > 0, "belt_Width must be positive");
+    assert(
+        belt_Ring_Internal_Diameter > belt_Ring_External_Diameter,
+        "belt_Ring_Internal_Diameter must be less than belt_Ring_External_Diameter");
+    assert(
+        belt_Buckle_Hole_Width < belt_Buckle_Width,
+        "belt_Buckle_Hole_Width must be less than belt_Buckle_Width");
+    assert(
+        belt_Buckle_Hole_Length < belt_Buckle_Length,
+        "belt_Buckle_Hole_Length must be less than belt_Buckle_Length");
+
+    // ring 
     difference()
     {
         cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
