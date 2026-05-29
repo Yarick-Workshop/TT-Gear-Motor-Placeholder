@@ -57,7 +57,7 @@ belt_Buckle_Hole_Length = 5;
 belt_Buckle_Hole_Corner_Radius = 1;
 
 /* [Hook] */
-hook_Offset = 5;// from motor face (Y)
+hook_Offset = 5;
 hook_Top_Thickness = 0.8;
 hook_Top_Side_Thickness = 0.4;
 hook_Bottom_Side_Thickness = 1.5;
@@ -238,7 +238,8 @@ module tt_motor_preview()
             
             // motor base
             translate([0, -gearBox_Length, motor_Side_Offset])
-                motor_mounting_part();
+                rotate([90, 0, 0])
+                    motor_mounting_part();
         }
 
         translate([0, -mountingHole_Couple_Offset])
@@ -435,7 +436,7 @@ module hook()
 {
     linear_extrude(height = hook_Depth, center = true)
         polygon(points = [
-            [0, 0],
+            [0, 0], // root at motor flat face
             [0, hook_Internal_Height],
             [-hook_Internal_Width, hook_Internal_Height],
             [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
@@ -446,39 +447,43 @@ module hook()
 
 module motor_mounting_part()
 {
-    motor_base_y = -motorBase_Length + hook_Offset;
-    flat_z = motorBase_Thickness / 2;
+    hook_position_on_base = motorBase_Length - hook_Offset;// along motor base from gearbox face
+    hook_flat_face_offset = motorBase_Thickness / 2;// D-shaft flat face, from center
 
-    difference()
+    union()
     {
-        union()
+        difference()
         {
-            rotate([90, 0, 0])
-                dd_shaft(
-                    length = motorBase_Length,
-                    diameter = gearBox_Height,
-                    thickness = motorBase_Thickness,
-                    center = false);
+            // D-shaft motor base
+            dd_shaft(
+                length = motorBase_Length,
+                diameter = gearBox_Height,
+                thickness = motorBase_Thickness,
+                center = false);
 
-            hook_placed();
-            mirror([0, 0, 1])
-                hook_placed();
+            // cave between mirrored hooks
+            translate([0, 0, hook_position_on_base - hook_Cave_Width / 2])
+                cube(
+                    [
+                        hook_Cave_Length,
+                        motorBase_Thickness + EPSILON,
+                        hook_Cave_Width
+                    ],
+                    center = true);
         }
 
-        translate([0, motor_base_y + hook_Cave_Width / 2])
-            cube(
-                [
-                    hook_Cave_Length,
-                    hook_Cave_Width,
-                    motorBase_Thickness + EPSILON
-                ],
-                center = true);
+        // belt hooks
+        // 1
+        hook_on_flat_face();
+        // 2
+        mirror([0, 1, 0])
+            hook_on_flat_face();
     }
 
-    module hook_placed()
+    module hook_on_flat_face()
     {
-        translate([0, motor_base_y, flat_z])
-            rotate([90, 0, -90])
+        translate([0, hook_flat_face_offset, hook_position_on_base])
+            rotate([0, -90])
                 hook();
     }
 }
