@@ -1,6 +1,8 @@
 /*
 Drawings sources:
-    - TT Gearbox Motor: https://grabcad.com/library/dc-3v-6v-tt-motor-1
+    - TT Gearbox Motor: 
+        - https://grabcad.com/library/dc-3v-6v-tt-motor-1
+        - https://www.adafruit.com/product/3777
     - 130 motor: https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
@@ -19,7 +21,7 @@ gearBox_Width = 18.7;
 gearBox_Corner_Radius = 3;
 
 /* [Motor] */
-motorBase_Length = 10;//TODO
+motorBase_Length = 11.2;//OK!!!
 motorBase_Thickness = 17;//TODO
 motor_Offset = 65;//TODO
 
@@ -44,7 +46,7 @@ belt_Thickness = 0.9;
 belt_Ring_External_Diameter = 15.1;
 belt_Ring_Internal_Diameter = 10.5;
 belt_Width = 8;
-belt_Offset_To_Buckle = 22;// TODO, it has to be auto-calculated instead!
+belt_Offset_To_Buckle = 21.55;// TODO, it has to be auto-calculated instead!
 belt_From_Motor_Bottom_Offset = 3.8;//TODO, do we need it?
 
 belt_Buckle_Width = 11.8;
@@ -53,6 +55,17 @@ belt_Buckle_Corner_Radius = 1;
 belt_Buckle_Hole_Width = 8;
 belt_Buckle_Hole_Length = 5;
 belt_Buckle_Hole_Corner_Radius = 1;
+
+/* [Hook] */
+hook_Offset = 5;
+hook_Top_Thickness = 0.8;
+hook_Top_Side_Thickness = 0.4;
+hook_Bottom_Side_Thickness = 1.5;
+hook_Internal_Height = 1.5;
+hook_Internal_Width = 1.5;
+hook_Depth = 5;
+hook_Cave_Width = 2;
+hook_Cave_Length = 6;
 
 /* [Hidden] */
 EPSILON = 0.01;
@@ -226,7 +239,7 @@ module tt_motor_preview()
             // motor base
             translate([0, -gearBox_Length, motor_Side_Offset])
                 rotate([90, 0, 0])
-                    dd_shaft(length = motorBase_Length, diameter = gearBox_Height, thickness = motorBase_Thickness, center = false);
+                    motor_mounting_part();
         }
 
         translate([0, -mountingHole_Couple_Offset])
@@ -355,7 +368,7 @@ module belt()
     assert(belt_Thickness > 0, "belt_Thickness must be positive");
     assert(belt_Width > 0, "belt_Width must be positive");
     assert(
-        belt_Ring_Internal_Diameter > belt_Ring_External_Diameter,
+        belt_Ring_Internal_Diameter < belt_Ring_External_Diameter,
         "belt_Ring_Internal_Diameter must be less than belt_Ring_External_Diameter");
     assert(
         belt_Buckle_Hole_Width < belt_Buckle_Width,
@@ -416,6 +429,57 @@ module belt()
                             h = belt_Thickness,
                             r = belt_Buckle_Hole_Corner_Radius);
                 }
+    }
+}
+
+module motor_mounting_part()
+{
+    hook_position_on_base = motorBase_Length - hook_Offset;// along motor base from gearbox face
+    hook_flat_face_offset = motorBase_Thickness / 2;// D-shaft flat face, from center
+
+    union()
+    {
+        difference()
+        {
+            // D-shaft motor base
+            dd_shaft(
+                length = motorBase_Length,
+                diameter = gearBox_Height,
+                thickness = motorBase_Thickness,
+                center = false);
+
+            // cave between mirrored hooks
+            translate([0, 0, hook_position_on_base - hook_Cave_Width / 2])
+                cube(
+                    [
+                        hook_Cave_Length,
+                        motorBase_Thickness + EPSILON,
+                        hook_Cave_Width
+                    ],
+                    center = true);
+        }
+
+        // belt hooks
+        // 1
+        hook_on_flat_face();
+        // 2
+        mirror([0, 1, 0])
+            hook_on_flat_face();
+    }
+
+    module hook_on_flat_face()
+    {
+        translate([0, hook_flat_face_offset, hook_position_on_base])
+            rotate([0, -90])
+                linear_extrude(height = hook_Depth, center = true)
+                    polygon(points = [
+                        [0, 0], // root at motor flat face
+                        [0, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
+                        [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
+                        [hook_Bottom_Side_Thickness, 0]
+                    ]);
     }
 }
 
