@@ -40,6 +40,7 @@ mountingHoleBox_Corner_Radius = 1;
 wheelShaft_Color = "white";//TODO
 wheelShaft_Length = 34;//??? measure
 wheelShaft_Diameter = 5.5;
+wheelShaft_Inner_Diameter = 1.95;
 wheelShaft_Offset = 11.0;
 wheelShaft_DD_Length = 6;// TODO
 wheelShaft_DD_Thickness = 3;// TODO
@@ -102,9 +103,18 @@ module rounded_square_extruded(
 module shaft()
 {
     //TODO, add rotation angle!
-    axle_shaft();
-    mirror([0, 0, 1])
-        axle_shaft();
+    difference ()
+    {
+        union()
+        {
+            axle_shaft();
+            mirror([0, 0, 1])
+                axle_shaft();
+        }
+        // internal hole for the shaft, TODO, refactor, really there are 2 parts but not one
+        cylinder(d = wheelShaft_Inner_Diameter, h = wheelShaft_Length + 2 * EPSILON, center=true);
+    }
+    
 
     module axle_shaft()
     {
@@ -270,6 +280,13 @@ module tt_motor_preview()
         translate([0, mountingHole_Single_Offset])
             cylinder(d = mountingHole_Diameter, h = 34, center=true);
 
+        // shaft hole
+        translate([0, -wheelShaft_Offset])
+        {
+            cylinder(d = wheelShaft_Diameter + 2 * EPSILON, h = gearBox_Width + 2 * EPSILON, center = true);
+        }
+
+        // separate 2 parts of the motor base
         cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
     }
 
