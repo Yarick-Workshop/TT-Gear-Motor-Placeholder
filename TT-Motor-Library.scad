@@ -19,6 +19,10 @@ gearBox_Length = 37;//??? measure
 gearBox_Height = 22.44;
 gearBox_Width = 18.7;
 gearBox_Corner_Radius = 3;
+gearBox_Pin_Diameter = 4;
+gearBox_Pin_Height = 1.92;
+gearBox_Pin_Top_Round_Radius = 0.25;
+gearBox_Pin_Offset = 22.2;
 
 /* [Motor] */
 motorBase_Length = 11.2;//OK!!!
@@ -222,6 +226,7 @@ module tt_motor_preview()
     {
         union()
         {
+            // gear box body
             rounded_square_extruded(
                 sx = gearBox_Height,
                 sy = gearBox_Length,
@@ -229,6 +234,16 @@ module tt_motor_preview()
                 r = gearBox_Corner_Radius
             );
 
+            // side pin
+            translate([0, -gearBox_Pin_Offset, -gearBox_Width / 2])
+                rotate([0, 180])
+                    round_end_cylinder(
+                        diameter = gearBox_Pin_Diameter,
+                        length = gearBox_Pin_Height,
+                        top_round_radius = gearBox_Pin_Top_Round_Radius,
+                        center = false);
+
+            // additional mounting hole box
             translate([0, mountingHoleBox_Length])
                 rounded_square_extruded(
                     sx = mountingHoleBox_Width,
@@ -242,6 +257,7 @@ module tt_motor_preview()
                     motor_mounting_part();
         }
 
+        // mounting holes
         translate([0, -mountingHole_Couple_Offset])
         {
             translate([mountingHole_Couple_Distance/2, 0])
@@ -250,6 +266,7 @@ module tt_motor_preview()
                 cylinder(d = mountingHole_Diameter, h = 34, center=true);
         }
 
+        // additional mounting hole
         translate([0, mountingHole_Single_Offset])
             cylinder(d = mountingHole_Diameter, h = 34, center=true);
 
