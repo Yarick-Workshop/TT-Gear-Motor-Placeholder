@@ -1,6 +1,13 @@
 /*
-Drawing source:
-    - https://www.makerstore.com.au/product/elec-130motor-dc6v/
+    Copyright (c) 2026 Yarick Workshop
+        - Telegram: https://t.me/YarickWorkshop
+        - YouTube: https://www.youtube.com/@yarick-workshop
+        - Patreon: https://www.patreon.com/YarickWorkshop
+        - Thingiverse: https://www.thingiverse.com/techno_plyushkin/
+        - Repository: https://github.com/Yarick-Workshop/TT-Gear-Motor-Placeholder
+
+    Drawing source:
+        - https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
 // TODO, polish!

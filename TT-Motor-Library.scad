@@ -1,8 +1,15 @@
 /*
-Drawings sources:
-    - TT Gearbox Motor: 
-        - https://grabcad.com/library/dc-3v-6v-tt-motor-1
-        - https://www.adafruit.com/product/3777
+    Copyright (c) 2026 Yarick Workshop
+        - Telegram: https://t.me/YarickWorkshop
+        - YouTube: https://www.youtube.com/@yarick-workshop
+        - Patreon: https://www.patreon.com/YarickWorkshop
+        - Thingiverse: https://www.thingiverse.com/techno_plyushkin/
+        - Repository: https://github.com/Yarick-Workshop/TT-Gear-Motor-Placeholder
+
+    Drawings sources:
+        - TT Gearbox Motor: 
+            - https://grabcad.com/library/dc-3v-6v-tt-motor-1
+            - https://www.adafruit.com/product/3777
 */
 
 $fn = 64;// TODO, play with it, investigate the artifacts!
