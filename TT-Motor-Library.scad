@@ -100,20 +100,22 @@ module rounded_square_extruded(
             }
 }
 
-module shaft()
+module shaft(angle)
 {
-    //TODO, add rotation angle!
-    difference ()
-    {
-        union()
+    rotate([0, 0, angle])
+        difference ()
         {
-            axle_shaft();
-            mirror([0, 0, 1])
+            // shaft body
+            union()
+            {
                 axle_shaft();
+                mirror([0, 0, 1])
+                    axle_shaft();
+            }
+
+            // internal hole for the shaft, TODO, refactor, really there are 2 parts but not one
+            cylinder(d = wheelShaft_Inner_Diameter, h = wheelShaft_Length + 2 * EPSILON, center=true);
         }
-        // internal hole for the shaft, TODO, refactor, really there are 2 parts but not one
-        cylinder(d = wheelShaft_Inner_Diameter, h = wheelShaft_Length + 2 * EPSILON, center=true);
-    }
     
 
     module axle_shaft()
@@ -229,7 +231,7 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
     }
 }
 
-module tt_motor_preview()
+module tt_motor_preview(shaft_angle = 0)
 {
     color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
     difference()
@@ -299,7 +301,7 @@ module tt_motor_preview()
     color(wheelShaft_Color)
         translate([0, -wheelShaft_Offset])
         {
-            shaft();
+            shaft(shaft_angle);
         }
 
     color("gray", 0.5)
@@ -519,4 +521,4 @@ module motor_mounting_part()
 
 // the main rendering part
 rotate([0, 90, 180])
-    tt_motor_preview();
+    tt_motor_preview(shaft_angle = 90);
