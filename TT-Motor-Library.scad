@@ -432,19 +432,6 @@ module belt()
     }
 }
 
-module hook()
-{
-    linear_extrude(height = hook_Depth, center = true)
-        polygon(points = [
-            [0, 0], // root at motor flat face
-            [0, hook_Internal_Height],
-            [-hook_Internal_Width, hook_Internal_Height],
-            [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
-            [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
-            [hook_Bottom_Side_Thickness, 0]
-        ]);
-}
-
 module motor_mounting_part()
 {
     hook_position_on_base = motorBase_Length - hook_Offset;// along motor base from gearbox face
@@ -484,7 +471,15 @@ module motor_mounting_part()
     {
         translate([0, hook_flat_face_offset, hook_position_on_base])
             rotate([0, -90])
-                hook();
+                linear_extrude(height = hook_Depth, center = true)
+                    polygon(points = [
+                        [0, 0], // root at motor flat face
+                        [0, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
+                        [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
+                        [hook_Bottom_Side_Thickness, 0]
+                    ]);
     }
 }
 
