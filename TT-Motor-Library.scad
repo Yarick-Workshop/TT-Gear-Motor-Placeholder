@@ -88,51 +88,23 @@ module rounded_square_extruded(
     sx,
     sy,
     h,
-    r,
-    y_direction = -1,
-    round_all_corners = false)
+    r)
 {
 	//TODO, refactor
     r_eff = min(r, sx / 2, sy / 2);
 
     linear_extrude(height = h, center = true)
-        if (round_all_corners)
-        {
-            translate(
-                [
-                    -sx / 2 + r_eff,
-                    y_direction < 0 ? -sy + r_eff : r_eff
-                ])
-                offset(r = r_eff)
-                    square([sx - 2 * r_eff, sy - 2 * r_eff], center = false);
-        }
-        else
-        {
-            translate([-sx / 2, y_direction < 0 ? -sy : 0])
-                union() {
-                    if (y_direction < 0)
-                    {
-                        square([sx, sy - r_eff]);
-                        translate([r_eff, sy - r_eff])
-                            square([sx - 2 * r_eff, r_eff]);
-                        translate([r_eff, sy - r_eff])
-                            circle(r = r_eff);
-                        translate([sx - r_eff, sy - r_eff])
-                            circle(r = r_eff);
-                    }
-                    else
-                    {
-                        translate([0, r_eff])
-                            square([sx, sy - r_eff]);
-                        translate([r_eff, 0])
-                            square([sx - 2 * r_eff, r_eff]);
-                        translate([r_eff, r_eff])
-                            circle(r = r_eff);
-                        translate([sx - r_eff, r_eff])
-                            circle(r = r_eff);
-                    }
-                }
-        }
+        translate([-sx / 2, 0])
+            union() {
+                translate([0, r_eff])
+                    square([sx, sy - r_eff]);
+                translate([r_eff, 0])
+                    square([sx - 2 * r_eff, r_eff]);
+                translate([r_eff, r_eff])
+                    circle(r = r_eff);
+                translate([sx - r_eff, r_eff])
+                    circle(r = r_eff);
+            }
 }
 
 module shaft(angle)
@@ -144,7 +116,7 @@ module shaft(angle)
             union()
             {
                 axle_shaft();
-                rotate([180, 0, 0])
+                mirror([0, 0, 1])
                     axle_shaft();
             }
 
@@ -249,20 +221,11 @@ module dd_shaft(
     }
 }
 
-module d_shaft(
-    length,
-    diameter,
-    thickness,
-    bottom_round_radius = 0,
-    center = false,
-    flat_y = -1)
+module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = false)
 {
     // TODO, check and optimize!
     // Single-flat D profile (thickness = flat-to-peak height).
     r = diameter / 2;
-    flat_y_offset = flat_y < 0
-        ? -r + (diameter - thickness)
-        : r - (diameter - thickness);
     intersection()
     {
         round_end_cylinder(
@@ -270,7 +233,7 @@ module d_shaft(
             length = length,
             bottom_round_radius = bottom_round_radius,
             center = center);
-        translate([-(diameter + 1) / 2, flat_y_offset, center ? -length/2 : 0])
+        translate([-(diameter + 1) / 2, -r + (diameter - thickness), center ? -length/2 : 0])
             cube([diameter + 1, thickness + EPSILON, length + EPSILON], center = false);
     }
 }
@@ -289,8 +252,8 @@ module tt_motor_preview(shaft_angle = 0)
                 sx = gearBox_Height,
                 sy = gearBox_Length,
                 h = gearBox_Width,
-                r = gearBox_Corner_Radius,
-                y_direction = 1);
+                r = gearBox_Corner_Radius
+            );
 
             // side pin
             translate([0, gearBox_Pin_Offset, -gearBox_Width / 2])
@@ -307,8 +270,7 @@ module tt_motor_preview(shaft_angle = 0)
                     sx = mountingHoleBox_Width,
                     sy = mountingHoleBox_Length,
                     h = mountingHoleBox_Height,
-                    r = mountingHoleBox_Corner_Radius,
-                    y_direction = 1);
+                    r = mountingHoleBox_Corner_Radius);
             
             // motor base
             translate([0, gearBox_Length, motor_Side_Offset])
@@ -341,7 +303,7 @@ module tt_motor_preview(shaft_angle = 0)
 
     // 130 motor
     translate([0, motor_Offset, motor_Side_Offset])
-        rotate([90, 0, 0])
+        rotate([-90, 0, 180])
             motor130_preview();
 
     // shaft
@@ -379,17 +341,13 @@ module belt()
         belt_Buckle_Hole_Length < belt_Buckle_Length,
         "belt_Buckle_Hole_Length must be less than belt_Buckle_Length");
 
-    // ring + strap/buckles; bore clearance aligned with ring internal hole (Z axis)
-    union()
+    // ring + strap/buckles with a single shared bore cutout along Z
+    difference()
     {
-        difference()
+        union()
         {
             cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
-            cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
-        }
 
-        difference()
-        {
             rotate([90, 0, -90])
             {
                 // belt strap
@@ -401,52 +359,49 @@ module belt()
                         sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON,
                         sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON,
                         h = belt_Width,
-                        r = belt_strap_corner_radius,
-                        y_direction = 1);
+                        r = belt_strap_corner_radius);
                     translate([0, belt_Thickness - EPSILON])
                         rounded_square_extruded(
                             sx = motorBase_Thickness + EPSILON,
                             sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 4 * EPSILON,
                             h = belt_Width + 2 * EPSILON,
-                            r = belt_strap_inner_corner_radius,
-                            y_direction = 1);
+                            r = belt_strap_inner_corner_radius);
                 }
 
-                belt_buckle(side = 1);
-                belt_buckle(side = -1);
+                // belt buckles
+                belt_buckle();
+                mirror([1, 0, 0])
+                    belt_buckle();
             }
-
-            translate([0, 0, -EPSILON])
-                cylinder(
-                    d = belt_Ring_Internal_Diameter + 2 * EPSILON,
-                    h = belt_Width + belt_Thickness + 4 * EPSILON);
         }
+
+        translate([0, 0, -EPSILON])
+            cylinder(
+                d = belt_Ring_Internal_Diameter,
+                h = belt_Thickness + 2 * EPSILON);
     }
 
-    module belt_buckle(side = 1)
+    module belt_buckle()
     {
-        belt_buckle_hole_corner_radius = max(EPSILON, belt_Buckle_Hole_Corner_Radius - belt_Thickness);
         translate(
             [
-                side * (motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2),
+                motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2,
                 belt_Offset_To_Buckle
             ])
-            rotate([0, -90, -180])
+            rotate([0, -90, 180])
                 difference()
                 {
                     rounded_square_extruded(
                         sx = belt_Buckle_Width,
                         sy = belt_Buckle_Length,
                         h = belt_Thickness,
-                        r = belt_Buckle_Corner_Radius,
-                        y_direction = 1);
+                        r = belt_Buckle_Corner_Radius);
                     translate([0, (belt_Buckle_Length - belt_Buckle_Hole_Length) / 2])
                         rounded_square_extruded(
                             sx = belt_Buckle_Hole_Width,
                             sy = belt_Buckle_Hole_Length,
                             h = belt_Thickness + 2 * EPSILON,
-                            r = belt_buckle_hole_corner_radius,
-                            y_direction = 1);
+                            r = belt_Buckle_Hole_Corner_Radius);
                 }
     }
 }
@@ -479,27 +434,27 @@ module motor_mounting_part()
         }
 
         // belt hooks
-        hook_on_flat_face(flat_y = 1);
-        hook_on_flat_face(flat_y = -1);
+        hook_on_flat_face();
+        mirror([0, 1, 0])
+            hook_on_flat_face();
     }
 
-    module hook_on_flat_face(flat_y = 1)
+    module hook_on_flat_face()
     {
-        y_dir = flat_y;
-        translate([0, flat_y * hook_flat_face_offset, hook_position_on_base])
+        translate([0, hook_flat_face_offset, hook_position_on_base])
             rotate([0, -90])
                 linear_extrude(height = hook_Depth, center = true)
                     polygon(points = [
                         [0, 0],
-                        [0, y_dir * hook_Internal_Height],
-                        [-hook_Internal_Width, y_dir * hook_Internal_Height],
-                        [-hook_Internal_Width, y_dir * (hook_Internal_Height + hook_Top_Thickness)],
-                        [hook_Top_Side_Thickness, y_dir * (hook_Internal_Height + hook_Top_Thickness)],
+                        [0, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height],
+                        [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
+                        [hook_Top_Side_Thickness, hook_Internal_Height + hook_Top_Thickness],
                         [hook_Bottom_Side_Thickness, 0]
                     ]);
     }
 }
 
 // the main rendering part
-rotate([0, 90, 0])
-    tt_motor_preview(shaft_angle = -90);
+rotate([0, -90, 0])
+    tt_motor_preview(shaft_angle = 90);
