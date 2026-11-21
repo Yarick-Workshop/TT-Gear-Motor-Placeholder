@@ -82,16 +82,32 @@ hook_Depth = 5;
 hook_Cave_Width = 2;
 hook_Cave_Length = 6;
 
+/* [Placeholder] */
+placeholder_Hole_Length = 100;
+placeholder_Clearance = 0.5;
+
 /* [Preview] */
-preview_Show_Model = true;
-preview_Show_Placeholder = true;
-preview_Placeholder_Offset = 80;
+preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Placeholder_Gap = 10;
 
 /* [Hidden] */
 EPSILON = 0.01;
 
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
+motor_Box_Width = max(
+    gearBox_Width,
+    motorBase_Thickness + 2 * (hook_Internal_Height + hook_Top_Thickness),
+    motorBase_Thickness + 2 * belt_Thickness);
+preview_Pos_X_Extent = max(
+    wheelShaft_Length / 2,
+    gearBox_Width / 2 + gearBox_Pin_Height,
+    motorBase_Thickness / 2 + max(hook_Internal_Height + hook_Top_Thickness, belt_Thickness) - motor_Side_Offset);
+placeholder_Neg_X_Extent = max(
+    placeholder_Hole_Length / 2,
+    gearBox_Width / 2 + placeholder_Clearance,
+    motor_Side_Offset + motor_Box_Width / 2 + placeholder_Clearance);
+preview_Placeholder_Offset = preview_Pos_X_Extent + placeholder_Neg_X_Extent + preview_Placeholder_Gap;
 
 function origin_lengthwise_offset(mode) =
     mode == "shaft" ? -wheelShaft_Offset :
@@ -366,17 +382,13 @@ module tt_motor_preview(
 module tt_motor_placeholder(
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise,
-    hole_length = 100,
-    clearance = 0.5)
+    hole_length = placeholder_Hole_Length,
+    clearance = placeholder_Clearance)
 {
     assert(hole_length > 0, "hole_length must be positive");
     assert(clearance >= 0, "clearance must be non-negative");
 
     motor_box_length = motor_Offset - gearBox_Length;
-    motor_box_width = max(
-        gearBox_Width,
-        motorBase_Thickness + 2 * (hook_Internal_Height + hook_Top_Thickness),
-        motorBase_Thickness + 2 * belt_Thickness);
 
     translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
         union()
@@ -405,11 +417,11 @@ module tt_motor_placeholder(
             translate([
                 -(gearBox_Height + 2 * clearance) / 2,
                 gearBox_Length - EPSILON,
-                motor_Side_Offset - (motor_box_width + 2 * clearance) / 2])
+                motor_Side_Offset - (motor_Box_Width + 2 * clearance) / 2])
                 cube([
                     gearBox_Height + 2 * clearance,
                     motor_box_length + clearance + EPSILON,
-                    motor_box_width + 2 * clearance]);
+                    motor_Box_Width + 2 * clearance]);
 
             // side pin placeholder
             translate([0, gearBox_Pin_Offset, -gearBox_Width / 2 + EPSILON])
@@ -564,11 +576,64 @@ module motor_mounting_part()
 }
 
 // the main rendering part
-if (preview_Show_Model)
-    rotate([0, -90, 0])
-        tt_motor_preview(shaft_angle = 90);
+module _tt_motor_scene()
+{
+    module preview_aligned()
+    {
+        rotate([0, -90, 0])
+            tt_motor_preview(shaft_angle = 90);
+    }
 
-if (preview_Show_Placeholder)
-    translate([preview_Placeholder_Offset, 0, 0])
+    module placeholder_aligned()
+    {
         rotate([0, -90, 0])
             tt_motor_placeholder();
+    }
+
+    if (preview_Mode == "placeholder")
+        placeholder_aligned();
+    else if (preview_Mode == "preview")
+        preview_aligned();
+    else if (preview_Mode == "both")
+    {
+        preview_aligned();
+        translate([preview_Placeholder_Offset, 0, 0])
+            placeholder_aligned();
+    }
+    else if (preview_Mode == "xor")
+    {
+        union()
+        {
+            difference()
+            {
+                placeholder_aligned();
+                preview_aligned();
+            }
+            difference()
+            {
+                preview_aligned();
+                placeholder_aligned();
+            }
+        }
+    }
+    else if (preview_Mode == "placeholder_minus_preview")
+    {
+        difference()
+        {
+            placeholder_aligned();
+            preview_aligned();
+        }
+    }
+    else if (preview_Mode == "preview_minus_placeholder")
+    {
+        difference()
+        {
+            preview_aligned();
+            placeholder_aligned();
+        }
+    }
+    else
+        assert(false, str("Unknown preview_Mode: ", preview_Mode));
+}
+
+_tt_motor_scene();

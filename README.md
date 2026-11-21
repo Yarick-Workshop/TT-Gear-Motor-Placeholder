@@ -10,7 +10,7 @@ TT Gearmotor placeholder (work in progress)
 
 ## Usage
 
-Open [TT-Motor-Library.scad](TT-Motor-Library.scad) in OpenSCAD to configure parameters via the **Customizer** (including the **Preview** tab to toggle `tt_motor_preview()`, `tt_motor_placeholder()`, and their side-by-side offset), or include it in your own assemblies with `use <TT-Motor-Library.scad>`:
+Open [TT-Motor-Library.scad](TT-Motor-Library.scad) in OpenSCAD to configure parameters via the **Customizer** (including the **Placeholder** tab for `placeholder_Hole_Length` / `placeholder_Clearance` and the **Preview** tab's `preview_Mode` dropdown and `preview_Placeholder_Gap`), or include it in your own assemblies with `use <TT-Motor-Library.scad>`:
 
 ```openscad
 use <TT-Motor-Library.scad>
@@ -47,8 +47,18 @@ difference() {
 ### Parameters
 
 - `origin_lengthwise`, `origin_heightwise` — same alignment options as `tt_motor_preview()` (defaults to `origin_Lengthwise` and `origin_Heightwise`).
-- `hole_length` (default `100`) — length of the three mounting-screw cylinders along the local Z axis.
-- `clearance` (default `0.5`) — fit tolerance (in mm, applied per side, suited for a 0.5 mm 3D printer nozzle) added to the outer dimensions of the gearbox box, front lug box, motor/belt cover box, and side pin so a physical motor slides into a 3D-printed cavity without binding due to printer tolerances or layer lines. Screw hole diameters remain unchanged (`mountingHole_Diameter`).
+- `hole_length` (default `placeholder_Hole_Length = 100`) — length of the three mounting-screw cylinders along the local Z axis.
+- `clearance` (default `placeholder_Clearance = 0.5`) — fit tolerance (in mm, applied per side, suited for a 0.5 mm 3D printer nozzle) added to the outer dimensions of the gearbox box, front lug box, motor/belt cover box, and side pin so a physical motor slides into a 3D-printed cavity without binding due to printer tolerances or layer lines. Screw hole diameters remain unchanged (`mountingHole_Diameter`).
+
+### Preview Modes (`preview_Mode`)
+
+Under the **Preview** tab in the Customizer:
+- `"both"` (**default**) — draws `tt_motor_preview()` and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, and `preview_Placeholder_Gap` (default `10` mm).
+- `"placeholder"` — draws only `tt_motor_placeholder()` at the origin.
+- `"preview"` — draws only `tt_motor_preview()` at the origin.
+- `"xor"` — symmetric difference of both modules at the same origin.
+- `"placeholder_minus_preview"` — subtracts `tt_motor_preview()` from `tt_motor_placeholder()` at the same origin.
+- `"preview_minus_placeholder"` — subtracts `tt_motor_placeholder()` from `tt_motor_preview()` at the same origin (to check for geometry protruding outside the placeholder).
 
 ## Origin Options
 
