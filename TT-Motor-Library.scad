@@ -360,10 +360,10 @@ module belt()
                         sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON,
                         h = belt_Width,
                         r = belt_strap_corner_radius);
-                    translate([0, belt_Thickness - EPSILON])
+                    translate([0, belt_Thickness])
                         rounded_square_extruded(
                             sx = motorBase_Thickness + EPSILON,
-                            sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 4 * EPSILON,
+                            sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 3 * EPSILON,
                             h = belt_Width + 2 * EPSILON,
                             r = belt_strap_inner_corner_radius);
                 }
