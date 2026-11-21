@@ -5,12 +5,12 @@ TT Gearmotor placeholder (work in progress)
 
 ## Files
 
-- [TT-Motor-Library.scad](TT-Motor-Library.scad) — main TT gearbox motor model, belt/hook mounting geometry, OpenSCAD Customizer parameters, and `tt_motor_preview()`.
+- [TT-Motor-Library.scad](TT-Motor-Library.scad) — main TT gearbox motor model, belt/hook mounting geometry, OpenSCAD Customizer parameters, `tt_motor_preview()`, and `tt_motor_placeholder()`.
 - [Motor-130-Library.scad](Motor-130-Library.scad) — 130-size DC motor sub-assembly (`motor130_preview()`), included by `TT-Motor-Library.scad`.
 
 ## Usage
 
-Open [TT-Motor-Library.scad](TT-Motor-Library.scad) in OpenSCAD to configure parameters via the **Customizer**, or include it in your own assemblies with `use <TT-Motor-Library.scad>`:
+Open [TT-Motor-Library.scad](TT-Motor-Library.scad) in OpenSCAD to configure parameters via the **Customizer** (including the **Preview** tab to toggle `tt_motor_preview()`, `tt_motor_placeholder()`, and their side-by-side offset), or include it in your own assemblies with `use <TT-Motor-Library.scad>`:
 
 ```openscad
 use <TT-Motor-Library.scad>
@@ -25,11 +25,34 @@ rotate([0, -90, 0])
         shaft_angle = 90,
         origin_lengthwise = "front",
         origin_heightwise = "top");
+
+// Cutout placeholder for difference() cavities, pin pocket, and screw holes
+difference() {
+    cube([30, 80, 30], center = true);
+    rotate([0, -90, 0])
+        tt_motor_placeholder(hole_length = 100, clearance = 0.5);
+}
 ```
+
+## Placeholder Module (`tt_motor_placeholder`)
+
+`tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length = 100, clearance = 0.5)` generates a solid negative-volume placeholder for subtracting motor cavities and mounting holes in `difference()` operations:
+
+- **Main gearbox box** — rectangular cavity covering the main gearbox body.
+- **Front mounting lug box** — smaller rectangular cavity covering the front mounting lug.
+- **Motor & belt cover box** — rectangular cavity covering the rear motor mounting base, hooks, belt, and 130 DC motor.
+- **Side pin placeholder** — cylindrical pocket for the gearbox side alignment pin.
+- **Mounting screw cylinders** — three long through-cylinders (`hole_length`, default `100`) for the two rear mounting holes and the front lug mounting hole.
+
+### Parameters
+
+- `origin_lengthwise`, `origin_heightwise` — same alignment options as `tt_motor_preview()` (defaults to `origin_Lengthwise` and `origin_Heightwise`).
+- `hole_length` (default `100`) — length of the three mounting-screw cylinders along the local Z axis.
+- `clearance` (default `0.5`) — fit tolerance (in mm, applied per side, suited for a 0.5 mm 3D printer nozzle) added to the outer dimensions of the gearbox box, front lug box, motor/belt cover box, and side pin so a physical motor slides into a 3D-printed cavity without binding due to printer tolerances or layer lines. Screw hole diameters remain unchanged (`mountingHole_Diameter`).
 
 ## Origin Options
 
-Origin alignment can be configured in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle, origin_lengthwise, origin_heightwise)`. Mode strings are case-sensitive.
+Origin alignment can be configured in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle, origin_lengthwise, origin_heightwise)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance)`. Mode strings are case-sensitive.
 
 ### Lengthwise (`origin_Lengthwise` / `origin_lengthwise`)
 - `"shaft"` (**default**) — aligns `0` with the center of the wheel shaft.
