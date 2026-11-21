@@ -91,20 +91,24 @@ module rounded_square_extruded(
     r)
 {
 	//TODO, refactor
-    r_eff = min(r, sx / 2, sy / 2);
+    r_eff = max(0, min(r, sx / 2, sy / 2));
 
     linear_extrude(height = h, center = true)
         translate([-sx / 2, 0])
-            union() {
-                translate([0, r_eff])
-                    square([sx, sy - r_eff]);
-                translate([r_eff, 0])
-                    square([sx - 2 * r_eff, r_eff]);
-                translate([r_eff, r_eff])
-                    circle(r = r_eff);
-                translate([sx - r_eff, r_eff])
-                    circle(r = r_eff);
-            }
+            if (r_eff == 0)
+                square([sx, sy]);
+            else
+                union() {
+                    translate([0, r_eff])
+                        square([sx, sy - r_eff]);
+                    if (sx > 2 * r_eff)
+                        translate([r_eff, 0])
+                            square([sx - 2 * r_eff, r_eff]);
+                    translate([r_eff, r_eff])
+                        circle(r = r_eff);
+                    translate([sx - r_eff, r_eff])
+                        circle(r = r_eff);
+                }
 }
 
 module shaft(angle)
@@ -352,7 +356,7 @@ module belt()
             {
                 // belt strap
                 belt_strap_corner_radius = belt_Buckle_Corner_Radius;
-                belt_strap_inner_corner_radius = max(EPSILON, belt_strap_corner_radius - belt_Thickness);
+                belt_strap_inner_corner_radius = max(0, belt_strap_corner_radius - belt_Thickness);
                 difference()
                 {
                     rounded_square_extruded(
