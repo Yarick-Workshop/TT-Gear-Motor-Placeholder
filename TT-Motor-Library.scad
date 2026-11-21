@@ -402,7 +402,7 @@ module tt_motor_placeholder(
     assert(motor_rear_y > gearBox_Length, "motor rear extent must exceed gearBox_Length");
     motor_box_front_y = max(-clearance, gearBox_Length - clearance - EPSILON);
     motor_box_length = motor_rear_y + clearance - motor_box_front_y;
-    motor_box_height = max(gearBox_Height, belt_Ring_External_Diameter, belt_Buckle_Width, hook_Depth);
+    motor_box_height = max(gearBox_Height, belt_Ring_External_Diameter, belt_Buckle_Width, belt_Width, hook_Depth);
 
     translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
         union()
