@@ -376,8 +376,8 @@ module tt_motor_preview(
 }
 
 /*
-    Negative-volume placeholder for difference() cutouts (cavities and screw holes).
-    `clearance` adds an outward fit margin per side to the boxes and pin.
+    Negative-volume placeholder for difference() cutouts (cavities, shaft, and screw holes).
+    `clearance` adds an outward fit margin per side to the boxes, pin, and wheel shaft cylinder.
 */
 module tt_motor_placeholder(
     origin_lengthwise = origin_Lengthwise,
@@ -442,6 +442,10 @@ module tt_motor_placeholder(
 
             translate([0, -mountingHole_Single_Offset, 0])
                 cylinder(d = mountingHole_Diameter, h = hole_length, center = true);
+
+            // wheel shaft pass-through cylinder
+            translate([0, wheelShaft_Offset, 0])
+                cylinder(d = wheelShaft_Diameter + 2 * clearance, h = hole_length, center = true);
         }
 }
 

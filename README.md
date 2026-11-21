@@ -43,12 +43,13 @@ difference() {
 - **Motor & belt cover box** — rectangular cavity covering the rear motor mounting base, hooks, belt, and 130 DC motor.
 - **Side pin placeholder** — cylindrical pocket for the gearbox side alignment pin.
 - **Mounting screw cylinders** — three long through-cylinders (`hole_length`, default `100`) for the two rear mounting holes and the front lug mounting hole.
+- **Wheel shaft pass-through cylinder** — long cylinder (`hole_length`, default `100`) centered at the wheel shaft (`wheelShaft_Offset`) for cutting shaft openings through housing walls.
 
 ### Parameters
 
 - `origin_lengthwise`, `origin_heightwise` — same alignment options as `tt_motor_preview()` (defaults to `origin_Lengthwise` and `origin_Heightwise`).
-- `hole_length` (default `placeholder_Hole_Length = 100`) — length of the three mounting-screw cylinders along the local Z axis.
-- `clearance` (default `placeholder_Clearance = 0.5`) — fit tolerance (in mm, applied per side, suited for a 0.5 mm 3D printer nozzle) added to the outer dimensions of the gearbox box, front lug box, motor/belt cover box, and side pin so a physical motor slides into a 3D-printed cavity without binding due to printer tolerances or layer lines. Screw hole diameters remain unchanged (`mountingHole_Diameter`).
+- `hole_length` (default `placeholder_Hole_Length = 100`) — length of the three mounting-screw cylinders and the wheel shaft cylinder along the local Z axis.
+- `clearance` (default `placeholder_Clearance = 0.5`) — fit tolerance (in mm, applied per side, suited for a 0.5 mm 3D printer nozzle) added to the outer dimensions of the gearbox box, front lug box, motor/belt cover box, side pin, and wheel shaft cylinder (`wheelShaft_Diameter + 2 * clearance`) so a physical motor slides into a 3D-printed cavity and the shaft spins freely without binding due to printer tolerances or layer lines. Screw hole diameters remain unchanged (`mountingHole_Diameter`).
 
 ### Preview Modes (`preview_Mode`)
 
@@ -58,7 +59,7 @@ Under the **Preview** tab in the Customizer:
 - `"preview"` — draws only `tt_motor_preview()` at the origin.
 - `"xor"` — symmetric difference of both modules at the same origin.
 - `"placeholder_minus_preview"` — subtracts `tt_motor_preview()` from `tt_motor_placeholder()` at the same origin.
-- `"preview_minus_placeholder"` — subtracts `tt_motor_placeholder()` from `tt_motor_preview()` at the same origin (to check for geometry protruding outside the placeholder).
+- `"preview_minus_placeholder"` — subtracts `tt_motor_placeholder()` from `tt_motor_preview()` at the same origin (to check for geometry protruding outside the placeholder; when `hole_length >= wheelShaft_Length` and `clearance > 0`, all preview geometry is enclosed).
 
 ## Origin Options
 
