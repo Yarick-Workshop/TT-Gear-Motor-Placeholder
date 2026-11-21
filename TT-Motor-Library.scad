@@ -15,8 +15,8 @@
 $fn = 64;// TODO, play with it, investigate the artifacts!
 
 /* [Origin] */
-origin_Y = "shaft"; // [shaft:Shaft center, front:Gearbox front]
-origin_Z = "shaft"; // [shaft:Shaft center, top:Top of gearbox, bottom:Bottom of gearbox]
+origin_Lengthwise = "shaft"; // [shaft:Shaft center, front:Gearbox front]
+origin_Heightwise = "shaft"; // [shaft:Shaft center, top:Top of gearbox, bottom:Bottom of gearbox]
 
 /* [Mounting Holes] */
 mountingHole_Diameter = 2.8;
@@ -88,16 +88,16 @@ EPSILON = 0.01;
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
 
-function origin_y_offset(mode) =
+function origin_lengthwise_offset(mode) =
     mode == "shaft" ? -wheelShaft_Offset :
     mode == "front" ? 0 :
-    assert(false, str("Unknown origin_Y mode: ", mode));
+    assert(false, str("Unknown origin_Lengthwise mode: ", mode));
 
-function origin_z_offset(mode) =
+function origin_heightwise_offset(mode) =
     mode == "shaft" ? 0 :
     mode == "top" ? gearBox_Height / 2 :
     mode == "bottom" ? -gearBox_Height / 2 :
-    assert(false, str("Unknown origin_Z mode: ", mode));
+    assert(false, str("Unknown origin_Heightwise mode: ", mode));
 
 module rounded_square_extruded(
     sx,
@@ -261,9 +261,12 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
 
 include <Motor-130-Library.scad>
 
-module tt_motor_preview(shaft_angle = 0, origin_y = origin_Y, origin_z = origin_Z)
+module tt_motor_preview(
+    shaft_angle = 0,
+    origin_lengthwise = origin_Lengthwise,
+    origin_heightwise = origin_Heightwise)
 {
-    translate([origin_z_offset(origin_z), origin_y_offset(origin_y), 0])
+    translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
     {
         color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
         difference()
