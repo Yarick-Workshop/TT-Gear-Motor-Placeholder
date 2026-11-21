@@ -14,6 +14,10 @@
 
 $fn = 64;// TODO, play with it, investigate the artifacts!
 
+/* [Origin] */
+origin_Y = "shaft"; // [shaft:Shaft center, front:Gearbox front]
+origin_Z = "shaft"; // [shaft:Shaft center, top:Top of gearbox, bottom:Bottom of gearbox]
+
 /* [Mounting Holes] */
 mountingHole_Diameter = 2.8;
 mountingHole_Couple_Offset = 31.1;
@@ -83,6 +87,17 @@ EPSILON = 0.01;
 
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
+
+function origin_y_offset(mode) =
+    mode == "shaft" ? -wheelShaft_Offset :
+    mode == "front" ? 0 :
+    assert(false, str("Unknown origin_Y mode: ", mode));
+
+function origin_z_offset(mode) =
+    mode == "shaft" ? 0 :
+    mode == "top" ? gearBox_Height / 2 :
+    mode == "bottom" ? -gearBox_Height / 2 :
+    assert(false, str("Unknown origin_Z mode: ", mode));
 
 module rounded_square_extruded(
     sx,
@@ -246,91 +261,94 @@ module d_shaft(length, diameter, thickness, bottom_round_radius = 0, center = fa
 
 include <Motor-130-Library.scad>
 
-module tt_motor_preview(shaft_angle = 0)
+module tt_motor_preview(shaft_angle = 0, origin_y = origin_Y, origin_z = origin_Z)
 {
-    color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
-    difference()
+    translate([origin_z_offset(origin_z), origin_y_offset(origin_y), 0])
     {
-        union()
+        color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
+        difference()
         {
-            // gear box body
-            rounded_square_extruded(
-                sx = gearBox_Height,
-                sy = gearBox_Length,
-                h = gearBox_Width,
-                r = gearBox_Corner_Radius
-            );
-
-            // side pin
-            translate([0, gearBox_Pin_Offset, -gearBox_Width / 2])
-                rotate([0, 180])
-                    round_end_cylinder(
-                        diameter = gearBox_Pin_Diameter,
-                        length = gearBox_Pin_Height,
-                        top_round_radius = gearBox_Pin_Top_Round_Radius,
-                        center = false);
-
-            // additional mounting hole box
-            translate([0, -mountingHoleBox_Length])
+            union()
+            {
+                // gear box body
                 rounded_square_extruded(
-                    sx = mountingHoleBox_Width,
-                    sy = mountingHoleBox_Length,
-                    h = mountingHoleBox_Height,
-                    r = mountingHoleBox_Corner_Radius);
-            
-            // motor base
-            translate([0, gearBox_Length, motor_Side_Offset])
-                rotate([-90, 0, 0])
-                    motor_mounting_part();
-        }
+                    sx = gearBox_Height,
+                    sy = gearBox_Length,
+                    h = gearBox_Width,
+                    r = gearBox_Corner_Radius
+                );
 
-        // mounting holes
-        translate([0, mountingHole_Couple_Offset])
-        {
-            translate([mountingHole_Couple_Distance/2, 0])
+                // side pin
+                translate([0, gearBox_Pin_Offset, -gearBox_Width / 2])
+                    rotate([0, 180])
+                        round_end_cylinder(
+                            diameter = gearBox_Pin_Diameter,
+                            length = gearBox_Pin_Height,
+                            top_round_radius = gearBox_Pin_Top_Round_Radius,
+                            center = false);
+
+                // additional mounting hole box
+                translate([0, -mountingHoleBox_Length])
+                    rounded_square_extruded(
+                        sx = mountingHoleBox_Width,
+                        sy = mountingHoleBox_Length,
+                        h = mountingHoleBox_Height,
+                        r = mountingHoleBox_Corner_Radius);
+                
+                // motor base
+                translate([0, gearBox_Length, motor_Side_Offset])
+                    rotate([-90, 0, 0])
+                        motor_mounting_part();
+            }
+
+            // mounting holes
+            translate([0, mountingHole_Couple_Offset])
+            {
+                translate([mountingHole_Couple_Distance/2, 0])
+                    cylinder(d = mountingHole_Diameter, h = 34, center=true);
+                translate([-mountingHole_Couple_Distance/2, 0])
+                    cylinder(d = mountingHole_Diameter, h = 34, center=true);
+            }
+
+            // additional mounting hole
+            translate([0, -mountingHole_Single_Offset])
                 cylinder(d = mountingHole_Diameter, h = 34, center=true);
-            translate([-mountingHole_Couple_Distance/2, 0])
-                cylinder(d = mountingHole_Diameter, h = 34, center=true);
+
+            // shaft hole
+            translate([0, wheelShaft_Offset])
+            {
+                cylinder(d = wheelShaft_Diameter + 2 * EPSILON, h = gearBox_Width + 2 * EPSILON, center = true);
+            }
+
+            // separate 2 parts of the motor base
+            cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
         }
 
-        // additional mounting hole
-        translate([0, -mountingHole_Single_Offset])
-            cylinder(d = mountingHole_Diameter, h = 34, center=true);
+        // 130 motor
+        translate([0, motor_Offset, motor_Side_Offset])
+            rotate([-90, 0, 180])
+                motor130_preview();
 
-        // shaft hole
-        translate([0, wheelShaft_Offset])
-        {
-            cylinder(d = wheelShaft_Diameter + 2 * EPSILON, h = gearBox_Width + 2 * EPSILON, center = true);
-        }
+        // shaft
+        color(wheelShaft_Color)
+            translate([0, wheelShaft_Offset])
+            {
+                shaft(shaft_angle);
+            }
 
-        // separate 2 parts of the motor base
-        cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
-    }
-
-    // 130 motor
-    translate([0, motor_Offset, motor_Side_Offset])
-        rotate([-90, 0, 180])
-            motor130_preview();
-
-    // shaft
-    color(wheelShaft_Color)
-        translate([0, wheelShaft_Offset])
-        {
-            shaft(shaft_angle);
-        }
-
-    color("gray", 0.5)
-        translate([0, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness, motor_Side_Offset])
-            rotate([90, 0, 0])
-                if ($preview)
-                {
-                    render() // to get rid of artifacts, TODO try another way to speed-up
+        color("gray", 0.5)
+            translate([0, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness, motor_Side_Offset])
+                rotate([90, 0, 0])
+                    if ($preview)
+                    {
+                        render() // to get rid of artifacts, TODO try another way to speed-up
+                            belt();
+                    }
+                    else
+                    {
                         belt();
-                }
-                else
-                {
-                    belt();
-                }
+                    }
+    }
 }
 
 module belt()
