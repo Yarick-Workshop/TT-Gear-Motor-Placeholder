@@ -82,11 +82,35 @@ hook_Depth = 5;
 hook_Cave_Width = 2;
 hook_Cave_Length = 6;
 
+/* [Placeholder] */
+placeholder_Hole_Length = 100;
+placeholder_Clearance = 0.5;
+
+/* [Preview] */
+preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Placeholder_Gap = 10;
+
 /* [Hidden] */
 EPSILON = 0.01;
 
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
+motor_Box_Width = max(
+    motorBase_Thickness,
+    motorBase_Thickness + 2 * (hook_Internal_Height + hook_Top_Thickness),
+    motorBase_Thickness + 2 * belt_Thickness + EPSILON,
+    belt_Ring_External_Diameter);
+preview_Pos_X_Extent = max(
+    wheelShaft_Length / 2,
+    gearBox_Width / 2 + gearBox_Pin_Height,
+    mountingHoleBox_Height / 2,
+    motor_Box_Width / 2 - motor_Side_Offset);
+placeholder_Neg_X_Extent = max(
+    placeholder_Hole_Length / 2,
+    gearBox_Width / 2 + placeholder_Clearance,
+    mountingHoleBox_Height / 2 + placeholder_Clearance,
+    motor_Side_Offset + motor_Box_Width / 2 + placeholder_Clearance);
+preview_Placeholder_Offset = preview_Pos_X_Extent + placeholder_Neg_X_Extent + preview_Placeholder_Gap;
 
 function origin_lengthwise_offset(mode) =
     mode == "shaft" ? -wheelShaft_Offset :
@@ -323,8 +347,11 @@ module tt_motor_preview(
                 cylinder(d = wheelShaft_Diameter + 2 * EPSILON, h = gearBox_Width + 2 * EPSILON, center = true);
             }
 
-            // separate 2 parts of the motor base
-            cube([1000, 1000, 0.1], center=true);//TODO, refactor, get rid of constants
+            // separate 2 halves of the gearbox and motor base along Z = 0
+            split_sx = max(gearBox_Height, mountingHoleBox_Width, hook_Depth) + 2 * EPSILON;
+            split_sy = mountingHoleBox_Length + gearBox_Length + motorBase_Length + 2 * EPSILON;
+            translate([0, (gearBox_Length + motorBase_Length - mountingHoleBox_Length) / 2, 0])
+                cube([split_sx, split_sy, 0.1], center = true);
         }
 
         // 130 motor
@@ -352,6 +379,88 @@ module tt_motor_preview(
                         belt();
                     }
     }
+}
+
+/*
+    Negative-volume placeholder for difference() cutouts (cavities, shaft, and screw holes).
+    `clearance` adds an outward fit margin per side to the boxes, pin, and wheel shaft cylinder.
+    `hole_length` is the total centered length along local Z (must exceed `gearBox_Width + 2 * clearance`
+    for the rear screw holes and wheel shaft opening to extend beyond the gearbox cavity).
+*/
+module tt_motor_placeholder(
+    origin_lengthwise = origin_Lengthwise,
+    origin_heightwise = origin_Heightwise,
+    hole_length = placeholder_Hole_Length,
+    clearance = placeholder_Clearance,
+    hole_diameter = mountingHole_Diameter)
+{
+    assert(hole_length > 0, "hole_length must be positive");
+    assert(clearance >= 0, "clearance must be non-negative");
+    assert(hole_diameter > 0, "hole_diameter must be positive");
+
+    motor_rear_y = max(motor_Offset, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness);
+    assert(motor_rear_y > gearBox_Length, "motor rear extent must exceed gearBox_Length");
+    motor_box_front_y = max(-clearance, gearBox_Length - clearance - EPSILON);
+    motor_box_length = motor_rear_y + clearance - motor_box_front_y;
+    motor_box_height = max(gearBox_Height, belt_Ring_External_Diameter, belt_Buckle_Width, hook_Depth);
+
+    translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
+        union()
+        {
+            // main gearbox box
+            translate([
+                -(gearBox_Height + 2 * clearance) / 2,
+                -clearance,
+                -(gearBox_Width + 2 * clearance) / 2])
+                cube([
+                    gearBox_Height + 2 * clearance,
+                    gearBox_Length + 2 * clearance,
+                    gearBox_Width + 2 * clearance]);
+
+            // front mounting lug box
+            translate([
+                -(mountingHoleBox_Width + 2 * clearance) / 2,
+                -mountingHoleBox_Length - clearance,
+                -(mountingHoleBox_Height + 2 * clearance) / 2])
+                cube([
+                    mountingHoleBox_Width + 2 * clearance,
+                    mountingHoleBox_Length + clearance + EPSILON,
+                    mountingHoleBox_Height + 2 * clearance]);
+
+            // motor, base, hooks and belt cover box
+            translate([
+                -(motor_box_height + 2 * clearance) / 2,
+                motor_box_front_y,
+                motor_Side_Offset - (motor_Box_Width + 2 * clearance) / 2])
+                cube([
+                    motor_box_height + 2 * clearance,
+                    motor_box_length,
+                    motor_Box_Width + 2 * clearance]);
+
+            // side pin placeholder
+            translate([0, gearBox_Pin_Offset, -gearBox_Width / 2 + EPSILON])
+                rotate([0, 180, 0])
+                    cylinder(
+                        d = gearBox_Pin_Diameter + 2 * clearance,
+                        h = gearBox_Pin_Height + clearance + EPSILON,
+                        center = false);
+
+            // mounting screw hole cylinders
+            translate([0, mountingHole_Couple_Offset, 0])
+            {
+                translate([mountingHole_Couple_Distance / 2, 0, 0])
+                    cylinder(d = hole_diameter, h = hole_length, center = true);
+                translate([-mountingHole_Couple_Distance / 2, 0, 0])
+                    cylinder(d = hole_diameter, h = hole_length, center = true);
+            }
+
+            translate([0, -mountingHole_Single_Offset, 0])
+                cylinder(d = hole_diameter, h = hole_length, center = true);
+
+            // wheel shaft pass-through cylinder
+            translate([0, wheelShaft_Offset, 0])
+                cylinder(d = wheelShaft_Diameter + 2 * clearance, h = hole_length, center = true);
+        }
 }
 
 module belt()
@@ -485,5 +594,68 @@ module motor_mounting_part()
 }
 
 // the main rendering part
-rotate([0, -90, 0])
-    tt_motor_preview(shaft_angle = 90);
+module _tt_motor_scene()
+{
+    module preview_aligned()
+    {
+        rotate([0, -90, 0])
+            tt_motor_preview(shaft_angle = 90);
+    }
+
+    module placeholder_aligned()
+    {
+        rotate([0, -90, 0])
+            tt_motor_placeholder();
+    }
+
+    if (preview_Mode == "placeholder")
+        placeholder_aligned();
+    else if (preview_Mode == "preview")
+        preview_aligned();
+    else if (preview_Mode == "both")
+    {
+        preview_aligned();
+        translate([preview_Placeholder_Offset, 0, 0])
+            placeholder_aligned();
+    }
+    else if (preview_Mode == "xor")
+    {
+        union()
+        {
+            difference()
+            {
+                placeholder_aligned();
+                preview_aligned();
+            }
+            difference()
+            {
+                preview_aligned();
+                placeholder_aligned();
+            }
+        }
+    }
+    else if (preview_Mode == "placeholder_minus_preview")
+    {
+        difference()
+        {
+            placeholder_aligned();
+            preview_aligned();
+        }
+    }
+    else if (preview_Mode == "preview_minus_placeholder")
+    {
+        difference()
+        {
+            preview_aligned();
+            placeholder_aligned();
+        }
+    }
+    else
+        assert(
+            false,
+            str(
+                "Unknown preview_Mode '", preview_Mode,
+                "', expected one of: placeholder, preview, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+}
+
+_tt_motor_scene();
