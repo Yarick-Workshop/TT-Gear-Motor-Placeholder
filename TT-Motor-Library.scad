@@ -90,20 +90,27 @@ module rounded_square_extruded(
     h,
     r)
 {
-	//TODO, refactor
-    r_eff = min(r, sx / 2, sy / 2);
+    //TODO, refactor
+    r_eff = max(0, min(r, sx / 2, sy / 2));
 
     linear_extrude(height = h, center = true)
-        translate([-sx / 2, -sy])
-            union() {
-                square([sx, sy - r_eff]);
-                translate([r_eff, sy - r_eff])
-                    square([sx - 2 * r_eff, r_eff]);
-                translate([r_eff, sy - r_eff])
-                    circle(r = r_eff);
-                translate([sx - r_eff, sy - r_eff])
-                    circle(r = r_eff);
-            }
+        translate([-sx / 2, 0])
+            if (r_eff == 0)
+                square([sx, sy]);
+            else
+                union() {
+                    translate([0, r_eff])
+                        square([sx, sy - r_eff]);
+                    if (sx > 2 * r_eff)
+                    {
+                        translate([r_eff, 0])
+                            square([sx - 2 * r_eff, r_eff]);
+                        translate([sx - r_eff, r_eff])
+                            circle(r = r_eff);
+                    }
+                    translate([r_eff, r_eff])
+                        circle(r = r_eff);
+                }
 }
 
 module shaft(angle)
@@ -255,7 +262,7 @@ module tt_motor_preview(shaft_angle = 0)
             );
 
             // side pin
-            translate([0, -gearBox_Pin_Offset, -gearBox_Width / 2])
+            translate([0, gearBox_Pin_Offset, -gearBox_Width / 2])
                 rotate([0, 180])
                     round_end_cylinder(
                         diameter = gearBox_Pin_Diameter,
@@ -264,7 +271,7 @@ module tt_motor_preview(shaft_angle = 0)
                         center = false);
 
             // additional mounting hole box
-            translate([0, mountingHoleBox_Length])
+            translate([0, -mountingHoleBox_Length])
                 rounded_square_extruded(
                     sx = mountingHoleBox_Width,
                     sy = mountingHoleBox_Length,
@@ -272,13 +279,13 @@ module tt_motor_preview(shaft_angle = 0)
                     r = mountingHoleBox_Corner_Radius);
             
             // motor base
-            translate([0, -gearBox_Length, motor_Side_Offset])
-                rotate([90, 0, 0])
+            translate([0, gearBox_Length, motor_Side_Offset])
+                rotate([-90, 0, 0])
                     motor_mounting_part();
         }
 
         // mounting holes
-        translate([0, -mountingHole_Couple_Offset])
+        translate([0, mountingHole_Couple_Offset])
         {
             translate([mountingHole_Couple_Distance/2, 0])
                 cylinder(d = mountingHole_Diameter, h = 34, center=true);
@@ -287,11 +294,11 @@ module tt_motor_preview(shaft_angle = 0)
         }
 
         // additional mounting hole
-        translate([0, mountingHole_Single_Offset])
+        translate([0, -mountingHole_Single_Offset])
             cylinder(d = mountingHole_Diameter, h = 34, center=true);
 
         // shaft hole
-        translate([0, -wheelShaft_Offset])
+        translate([0, wheelShaft_Offset])
         {
             cylinder(d = wheelShaft_Diameter + 2 * EPSILON, h = gearBox_Width + 2 * EPSILON, center = true);
         }
@@ -301,20 +308,20 @@ module tt_motor_preview(shaft_angle = 0)
     }
 
     // 130 motor
-    translate([0, -motor_Offset, motor_Side_Offset])
-        rotate([-90, 0, 0])
+    translate([0, motor_Offset, motor_Side_Offset])
+        rotate([-90, 0, 180])
             motor130_preview();
 
     // shaft
     color(wheelShaft_Color)
-        translate([0, -wheelShaft_Offset])
+        translate([0, wheelShaft_Offset])
         {
             shaft(shaft_angle);
         }
 
     color("gray", 0.5)
-        translate([0, -motor_Offset + belt_From_Motor_Bottom_Offset - belt_Thickness, /*TODO, generalize*/, motor_Side_Offset])
-            rotate([-90, 0, 0])
+        translate([0, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness, motor_Side_Offset])
+            rotate([90, 0, 0])
                 if ($preview)
                 {
                     render() // to get rid of artifacts, TODO try another way to speed-up
@@ -340,44 +347,56 @@ module belt()
         belt_Buckle_Hole_Length < belt_Buckle_Length,
         "belt_Buckle_Hole_Length must be less than belt_Buckle_Length");
 
-    // ring 
+    // ring + strap/buckles with a single shared bore cutout along Z
     difference()
     {
-        cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
-        cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
-    }
-
-    rotate([-90, 0, 90])
-    {
-        // belt strap
-        difference()
+        union()
         {
-            rounded_square_extruded(
-                sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON,
-                sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON,
-                h = belt_Width,
-                r = belt_Buckle_Corner_Radius);
-            translate([0, - belt_Thickness + EPSILON])
-                rounded_square_extruded(
-                    sx = motorBase_Thickness + EPSILON,
-                    sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 4 * EPSILON,
-                    h = belt_Width,
-                    r = belt_Buckle_Corner_Radius);
-            rotate([90, 0])
-                cylinder(d = belt_Ring_Internal_Diameter, h = belt_Thickness);
+            cylinder(d = belt_Ring_External_Diameter, h = belt_Thickness);
+
+            rotate([90, 0, -90])
+            {
+                // belt strap
+                belt_strap_outer_sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON;
+                belt_strap_outer_sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON;
+                belt_strap_corner_radius = max(0, min(belt_Buckle_Corner_Radius, belt_strap_outer_sx / 2, belt_strap_outer_sy / 2));
+                belt_strap_inner_corner_radius = max(0, belt_strap_corner_radius - belt_Thickness);
+                difference()
+                {
+                    rounded_square_extruded(
+                        sx = belt_strap_outer_sx,
+                        sy = belt_strap_outer_sy,
+                        h = belt_Width,
+                        r = belt_strap_corner_radius);
+                    translate([0, belt_Thickness])
+                        rounded_square_extruded(
+                            sx = motorBase_Thickness + EPSILON,
+                            sy = belt_strap_outer_sy - belt_Thickness + EPSILON,
+                            h = belt_Width + 2 * EPSILON,
+                            r = belt_strap_inner_corner_radius);
+                }
+
+                // belt buckles
+                belt_buckle();
+                mirror([1, 0, 0])
+                    belt_buckle();
+            }
         }
 
-        // belt buckles
-        belt_buckle();
-        
-        mirror([1, 0, 0])
-            belt_buckle();
+        translate([0, 0, -EPSILON])
+            cylinder(
+                d = belt_Ring_Internal_Diameter,
+                h = belt_Thickness + 2 * EPSILON);
     }
 
     module belt_buckle()
     {
-        translate([motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2, -belt_Offset_To_Buckle])
-            rotate([0, 90, 180])
+        translate(
+            [
+                motorBase_Thickness / 2 + belt_Thickness / 2 + EPSILON / 2,
+                belt_Offset_To_Buckle
+            ])
+            rotate([0, -90, 180])
                 difference()
                 {
                     rounded_square_extruded(
@@ -385,11 +404,11 @@ module belt()
                         sy = belt_Buckle_Length,
                         h = belt_Thickness,
                         r = belt_Buckle_Corner_Radius);
-                    translate([0, -(belt_Buckle_Length - belt_Buckle_Hole_Length) / 2])
+                    translate([0, (belt_Buckle_Length - belt_Buckle_Hole_Length) / 2])
                         rounded_square_extruded(
                             sx = belt_Buckle_Hole_Width,
                             sy = belt_Buckle_Hole_Length,
-                            h = belt_Thickness,
+                            h = belt_Thickness + 2 * EPSILON,
                             r = belt_Buckle_Hole_Corner_Radius);
                 }
     }
@@ -423,9 +442,7 @@ module motor_mounting_part()
         }
 
         // belt hooks
-        // 1
         hook_on_flat_face();
-        // 2
         mirror([0, 1, 0])
             hook_on_flat_face();
     }
@@ -436,7 +453,7 @@ module motor_mounting_part()
             rotate([0, -90])
                 linear_extrude(height = hook_Depth, center = true)
                     polygon(points = [
-                        [0, 0], // root at motor flat face
+                        [0, 0],
                         [0, hook_Internal_Height],
                         [-hook_Internal_Width, hook_Internal_Height],
                         [-hook_Internal_Width, hook_Internal_Height + hook_Top_Thickness],
@@ -447,5 +464,5 @@ module motor_mounting_part()
 }
 
 // the main rendering part
-rotate([0, 90, 180])
+rotate([0, -90, 0])
     tt_motor_preview(shaft_angle = 90);
