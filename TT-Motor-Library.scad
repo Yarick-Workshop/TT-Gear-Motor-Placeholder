@@ -90,7 +90,7 @@ module rounded_square_extruded(
     h,
     r)
 {
-	//TODO, refactor
+    //TODO, refactor
     r_eff = max(0, min(r, sx / 2, sy / 2));
 
     linear_extrude(height = h, center = true)
@@ -102,11 +102,13 @@ module rounded_square_extruded(
                     translate([0, r_eff])
                         square([sx, sy - r_eff]);
                     if (sx > 2 * r_eff)
+                    {
                         translate([r_eff, 0])
                             square([sx - 2 * r_eff, r_eff]);
+                        translate([sx - r_eff, r_eff])
+                            circle(r = r_eff);
+                    }
                     translate([r_eff, r_eff])
-                        circle(r = r_eff);
-                    translate([sx - r_eff, r_eff])
                         circle(r = r_eff);
                 }
 }
@@ -355,19 +357,21 @@ module belt()
             rotate([90, 0, -90])
             {
                 // belt strap
-                belt_strap_corner_radius = belt_Buckle_Corner_Radius;
+                belt_strap_outer_sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON;
+                belt_strap_outer_sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON;
+                belt_strap_corner_radius = max(0, min(belt_Buckle_Corner_Radius, belt_strap_outer_sx / 2, belt_strap_outer_sy / 2));
                 belt_strap_inner_corner_radius = max(0, belt_strap_corner_radius - belt_Thickness);
                 difference()
                 {
                     rounded_square_extruded(
-                        sx = motorBase_Thickness + 2 * belt_Thickness + EPSILON,
-                        sy = belt_Offset_To_Buckle - belt_Buckle_Length + 2 * EPSILON,
+                        sx = belt_strap_outer_sx,
+                        sy = belt_strap_outer_sy,
                         h = belt_Width,
                         r = belt_strap_corner_radius);
                     translate([0, belt_Thickness])
                         rounded_square_extruded(
                             sx = motorBase_Thickness + EPSILON,
-                            sy = belt_Offset_To_Buckle - belt_Buckle_Length - belt_Thickness + 3 * EPSILON,
+                            sy = belt_strap_outer_sy - belt_Thickness + EPSILON,
                             h = belt_Width + 2 * EPSILON,
                             r = belt_strap_inner_corner_radius);
                 }
