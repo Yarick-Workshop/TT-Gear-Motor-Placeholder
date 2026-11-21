@@ -32,14 +32,14 @@ rotate([0, -90, 0])
 Origin alignment can be configured in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle, origin_lengthwise, origin_heightwise)`. Mode strings are case-sensitive.
 
 ### Lengthwise (`origin_Lengthwise` / `origin_lengthwise`)
-- `"shaft"` (**default**) — aligns `0` with the wheel shaft center (`Y = [-16, +54]` in local coordinates).
-- `"front"` — aligns `0` with the front face of the **main gearbox body** (`Y = 0`; the front mounting lug protrudes 5 mm to `Y = -5`).
+- `"shaft"` (**default**) — aligns `0` with the center of the wheel shaft.
+- `"front"` — aligns `0` with the front face of the **main gearbox body** (note: the front mounting lug still protrudes ahead of `0`).
 
-> **Migration note:** `origin_Lengthwise` now defaults to `"shaft"` instead of `"front"` (previous `master` behavior), shifting the default lengthwise origin by `-11 mm`. Pass `origin_lengthwise = "front"` (or select **Gearbox front** in the Customizer) to keep the previous alignment.
+> **Migration note:** `origin_Lengthwise` now defaults to `"shaft"` instead of `"front"` (previous `master` behavior), moving the default lengthwise origin from the gearbox front to the wheel shaft center. Pass `origin_lengthwise = "front"` (or select **Gearbox front** in the Customizer) to keep the previous alignment.
 
 ### Heightwise (`origin_Heightwise` / `origin_heightwise`)
 `tt_motor_preview()` shifts along the motor's local `X` axis, which maps to world `Z` under the file's default `rotate([0, -90, 0])`:
 
-- `"shaft"` (**default**) — centers `0` on the wheel shaft (`local X = [-11.22, +11.22]`).
-- `"top"` — places the gearbox on the positive `+X` side (`local X = [0, +22.44]`; `world Z = [0, +22.44]` under default rotation).
-- `"bottom"` — places the gearbox on the negative `-X` side (`local X = [-22.44, 0]`; `world Z = [-22.44, 0]` under default rotation).
+- `"shaft"` (**default**) — centers `0` on the wheel shaft (middle of the gearbox height).
+- `"top"` — places the gearbox above `0` (on the positive `+X` side locally, or `+Z` under default rotation).
+- `"bottom"` — places the gearbox below `0` (on the negative `-X` side locally, or `-Z` under default rotation).
