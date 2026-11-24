@@ -63,7 +63,17 @@ rotate([0, -90, 0])
         wheel_pos_z();
         wheel_neg_z();
     }
+
+// Wheels only (hide gearbox/motor/belt via show_body = false, and optionally hide the shaft via show_shaft = false)
+rotate([0, -90, 0])
+    tt_motor_preview(shaft_angle = 45, show_body = false, show_shaft = false)
+        my_wheel();
 ```
+
+### Helper Functions
+
+- `tt_motor_gearbox_height()` — returns `gearBox_Height` (`22.44` mm by default) so callers can derive vertical shaft placement and cavity floor thickness without hard-coding dimensions.
+- `wheel_shaft_round_part_length()` — returns the distance from shaft center to the DD shoulder (`wheelShaft_Length / 2 - wheelShaft_DD_Length`, `11` mm by default).
 
 > **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 11.2` mm behind the shaft center / `22.2` mm from the gearbox front, `Ø 4` mm, spanning `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside `Ø 18.4` mm or shift it outward along `+Z`.
 
@@ -108,7 +118,7 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 
 - **`[Origin]`** — choose default lengthwise and heightwise origins (`origin_Lengthwise`, `origin_Heightwise`).
 - **`[Placeholder]`** — set default `placeholder_Hole_Length` and `placeholder_Clearance`.
-- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`; comparison modes keep `shaft_angle = 90`), and `preview_Mode`:
+- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`; comparison modes keep `shaft_angle = 90`), `preview_Show_Body` (default `true`), `preview_Show_Shaft` (default `true`) (control body/shaft visibility in preview modes and serve as defaults for `tt_motor_preview()`), and `preview_Mode`:
   - `"both"` (**default**) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
   - `"preview"` — shows only the motor model (`tt_motor_preview()`) with its wheel shaft rotated by `preview_Shaft_Angle`.
   - `"preview_with_wheels"` — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
