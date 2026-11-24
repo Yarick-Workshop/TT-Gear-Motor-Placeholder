@@ -95,6 +95,7 @@ preview_Shaft_Angle = 90; // [0:1:360]
 EPSILON = 0.01;
 
 function wheel_shaft_round_part_length() =
+    assert(wheelShaft_DD_Length >= 0, "wheelShaft_DD_Length must be non-negative")
     assert(
         wheelShaft_Length > 2 * wheelShaft_DD_Length,
         "wheelShaft_Length must be greater than 2 * wheelShaft_DD_Length")

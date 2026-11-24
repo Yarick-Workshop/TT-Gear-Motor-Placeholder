@@ -47,7 +47,7 @@ You can pass `0`, `1`, or `2` child modules to `tt_motor_preview()` to preview y
 - **1 child** — mounts the same wheel on both shaft ends (`+Z` side as given, `-Z` side rotated 180° via `rotate([180, 0, 0])`).
 - **2 children** — mounts the first child on the `+Z` shaft end and the second child (rotated via `rotate([180, 0, 0])`) on the `-Z` shaft end. To mount a wheel on one side only, pass an empty `union() {}` for the other child.
 
-When designing a wheel module, place its local `[0, 0, 0]` where the round shaft steps down to the flat DD section (`wheelShaft_Length / 2 - wheelShaft_DD_Length`, `11` mm from center with defaults), with `+Z` pointing outward away from the gearbox and the DD flats aligned with `±Y`. Each wheel automatically rotates around `Z` by `shaft_angle`:
+When designing a wheel module, place its local `[0, 0, 0]` where the round shaft steps down to the flat DD section (`wheelShaft_Length / 2 - wheelShaft_DD_Length`, `11` mm from center with defaults), with `+Z` pointing outward away from the gearbox and the DD flat faces at `±Y` (flat-to-flat thickness along `Y`, curved sides along `X`). Both wheels rotate rigidly with the shaft around the motor's `Z` axis by `shaft_angle`:
 
 ```openscad
 use <TT-Motor-Library.scad>
@@ -65,7 +65,7 @@ rotate([0, -90, 0])
     }
 ```
 
-> **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 22.2` mm, `Ø 4` mm, sitting `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside the hub or shift it outward along `+Z`.
+> **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 11.2` mm behind the shaft center / `22.2` mm from the gearbox front, `Ø 4` mm, spanning `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside `Ø 18.4` mm or shift it outward along `+Z`.
 
 ## Enclosure Cutouts (`tt_motor_placeholder`)
 
@@ -87,7 +87,7 @@ rotate([0, -90, 0])
 
 ## Origin & Alignment Options
 
-Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview()` and `tt_motor_placeholder()`. Mode names are case-sensitive.
+Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`. Mode names are case-sensitive.
 
 ### Lengthwise (`origin_Lengthwise` / `origin_lengthwise`)
 - `"shaft"` (**default**) — places `0` at the center of the wheel shaft.
@@ -108,12 +108,12 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 
 - **`[Origin]`** — choose default lengthwise and heightwise origins (`origin_Lengthwise`, `origin_Heightwise`).
 - **`[Placeholder]`** — set default `placeholder_Hole_Length` and `placeholder_Clearance`.
-- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90`), and `preview_Mode`:
-  - `"both"` (**default**) — shows `tt_motor_preview()` and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
-  - `"preview"` — shows only the motor model (`tt_motor_preview()`) rotated by `preview_Shaft_Angle`.
-  - `"preview_with_wheels"` — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends and rotated by `preview_Shaft_Angle`.
+- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`; comparison modes keep `shaft_angle = 90`), and `preview_Mode`:
+  - `"both"` (**default**) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
+  - `"preview"` — shows only the motor model (`tt_motor_preview()`) with its wheel shaft rotated by `preview_Shaft_Angle`.
+  - `"preview_with_wheels"` — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
   - `"wheel_only"` — shows only the demo wheel at `[0, 0, 0]` for quick inspection.
   - `"placeholder"` — shows only the negative-volume cutout (`tt_motor_placeholder()`).
   - `"xor"` — shows the symmetric difference between preview and placeholder at the same origin.
   - `"placeholder_minus_preview"` — subtracts the motor model from the cutout volume to inspect clearance space around the motor.
-  - `"preview_minus_placeholder"` — subtracts the cutout volume from the motor model to verify nothing sticks out (empty with default dimensions; placeholder comparison modes keep `shaft_angle = 90`).
+  - `"preview_minus_placeholder"` — subtracts the cutout volume from the motor model to verify nothing sticks out (empty with default dimensions when `clearance >= 0`).
