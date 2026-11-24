@@ -34,6 +34,32 @@ difference() {
 }
 ```
 
+### Wheel Callbacks (`tt_motor_preview` children)
+
+`tt_motor_preview()` accepts `0`, `1`, or `2` OpenSCAD child modules to attach wheels to the dual shaft:
+
+- **0 children** — renders the motor only.
+- **1 child** — mounts the child at the `+Z` shaft transition (`z = wheelShaft_Length / 2 - wheelShaft_DD_Length`) and mirrors it (`mirror([0, 0, 1])`) onto the `-Z` shaft transition.
+- **2 children** — mounts `children(0)` on the `+Z` shaft end and `children(1)` (mirrored via `mirror([0, 0, 1])`) on the `-Z` shaft end. To attach a wheel on only one side, pass an empty `union() {}` as the other child.
+
+Each wheel child's local `[0, 0, 0]` is placed where the round shaft meets the DD shaft, with its `+Z` axis pointing outward along the DD shaft, and rotated around `Z` by `shaft_angle`:
+
+```openscad
+use <TT-Motor-Library.scad>
+
+// Same wheel mirrored on both shaft ends
+rotate([0, -90, 0])
+    tt_motor_preview(shaft_angle = 45)
+        my_wheel();
+
+// Distinct left/right wheels on +Z and -Z shaft ends
+rotate([0, -90, 0])
+    tt_motor_preview(shaft_angle = 45) {
+        wheel_pos_z();
+        wheel_neg_z();
+    }
+```
+
 ## Placeholder Module (`tt_motor_placeholder`)
 
 `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length = 100, clearance = 0.5, hole_diameter = 2.8)` generates a solid negative-volume placeholder for subtracting motor cavities and mounting holes in `difference()` operations:
@@ -55,7 +81,9 @@ difference() {
 ### Preview Modes (`preview_Mode`)
 
 Under the **Preview** tab in the Customizer:
-- `"both"` (**default**) — draws `tt_motor_preview()` and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, and `preview_Placeholder_Gap` (default `10` mm).
+- `preview_Shaft_Angle` (default `90`, range `0`–`360`) — rotates the wheel shaft and any attached preview wheels.
+- `preview_Show_Wheels` (default `true`) — attaches an asymmetric spoked demo wheel (with a DD center bore and red 0° indicator spoke) to both shaft ends in `"preview"` and `"both"` modes so shaft rotation is clearly visible. Placeholder comparison modes (`"xor"`, `"placeholder_minus_preview"`, `"preview_minus_placeholder"`) omit demo wheels.
+- `"both"` (**default**) — draws `tt_motor_preview()` and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, `preview_Placeholder_Gap` (default `10` mm), and (when `preview_Show_Wheels` is enabled) the demo wheel width.
 - `"placeholder"` — draws only `tt_motor_placeholder()` at the origin.
 - `"preview"` — draws only `tt_motor_preview()` at the origin.
 - `"xor"` — symmetric difference of both modules at the same origin.
