@@ -39,10 +39,10 @@ difference() {
 `tt_motor_preview()` accepts `0`, `1`, or `2` OpenSCAD child modules to attach wheels to the dual shaft:
 
 - **0 children** — renders the motor only.
-- **1 child** — mounts the child at the `+Z` shaft transition (`z = wheelShaft_Length / 2 - wheelShaft_DD_Length`) and mirrors it (`mirror([0, 0, 1])`) onto the `-Z` shaft transition.
-- **2 children** — mounts `children(0)` on the `+Z` shaft end and `children(1)` (mirrored via `mirror([0, 0, 1])`) on the `-Z` shaft end. To attach a wheel on only one side, pass an empty `union() {}` as the other child.
+- **1 child** — mounts the child at the `+Z` shaft transition (`z = wheelShaft_Length / 2 - wheelShaft_DD_Length`) and rotates it (`rotate([180, 0, 0])`) onto the `-Z` shaft transition.
+- **2 children** — mounts `children(0)` on the `+Z` shaft end and `children(1)` (rotated via `rotate([180, 0, 0])`) on the `-Z` shaft end. To attach a wheel on only one side, pass an empty `union() {}` as the other child.
 
-Each wheel child's local `[0, 0, 0]` is placed where the round shaft meets the DD shaft, with its `+Z` axis pointing outward along the DD shaft, and rotated around `Z` by `shaft_angle`:
+Each wheel child's local `[0, 0, 0]` is placed where the round shaft meets the DD shaft, with its `+Z` axis pointing outward along the DD shaft, and rotated around `Z` by `shaft_angle`. Note that on the `-Z` side, the gearbox alignment pin (`Y = 22.2` mm, `d = 4` mm, `r ∈ [9.2, 13.2]` mm from the shaft center) protrudes `0.27` mm past the wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm), so flat-backed `-Z` wheels larger than `18.4` mm in diameter should include a `>= 0.3` mm recess at that radius or an outward `+Z` offset:
 
 ```openscad
 use <TT-Motor-Library.scad>
@@ -81,7 +81,7 @@ rotate([0, -90, 0])
 ### Preview Modes (`preview_Mode`)
 
 Under the **Preview** tab in the Customizer:
-- `preview_Shaft_Angle` (default `90`, range `0`–`360`) — rotates the wheel shaft and any attached preview wheels.
+- `preview_Shaft_Angle` (default `90`, range `0`–`360`) — rotates the wheel shaft and any attached preview wheels in `"preview"`, `"preview_with_wheels"`, and `"both"` modes (placeholder comparison modes keep `shaft_angle = 90`).
 - `"both"` (**default**) — draws `tt_motor_preview()` (without wheels) and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, and `preview_Placeholder_Gap` (default `10` mm).
 - `"placeholder"` — draws only `tt_motor_placeholder()` at the origin.
 - `"preview"` — draws only `tt_motor_preview()` at the origin (without wheels).
