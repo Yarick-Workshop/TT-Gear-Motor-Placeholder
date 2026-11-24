@@ -70,12 +70,12 @@ rotate([0, -90, 0])
         my_wheel();
 ```
 
-### Helper Functions
+> **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 11.2` mm behind the shaft center / `22.2` mm from the gearbox front, `Ø 4` mm, spanning `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside `Ø 18.4` mm or shift it outward along `+Z`.
+
+## Helper Functions
 
 - `tt_motor_gearbox_height()` — returns `gearBox_Height` (`22.44` mm by default) so callers can derive vertical shaft placement and cavity floor thickness without hard-coding dimensions.
 - `wheel_shaft_round_part_length()` — returns the distance from shaft center to the DD shoulder (`wheelShaft_Length / 2 - wheelShaft_DD_Length`, `11` mm by default).
-
-> **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 11.2` mm behind the shaft center / `22.2` mm from the gearbox front, `Ø 4` mm, spanning `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside `Ø 18.4` mm or shift it outward along `+Z`.
 
 ## Enclosure Cutouts (`tt_motor_placeholder`)
 
@@ -97,7 +97,7 @@ rotate([0, -90, 0])
 
 ## Origin & Alignment Options
 
-Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`. Mode names are case-sensitive.
+Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise, show_body, show_shaft)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`. Mode names are case-sensitive.
 
 ### Lengthwise (`origin_Lengthwise` / `origin_lengthwise`)
 - `"shaft"` (**default**) — places `0` at the center of the wheel shaft.
