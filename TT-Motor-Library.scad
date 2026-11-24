@@ -87,11 +87,19 @@ placeholder_Hole_Length = 100;
 placeholder_Clearance = 0.5;
 
 /* [Preview] */
-preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, preview_with_wheels:Preview with wheels, wheel_only:Wheel only, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
 preview_Placeholder_Gap = 10;
+preview_Shaft_Angle = 90; // [0:1:360]
 
 /* [Hidden] */
 EPSILON = 0.01;
+
+function wheel_shaft_round_part_length() =
+    assert(wheelShaft_DD_Length >= 0, "wheelShaft_DD_Length must be non-negative")
+    assert(
+        wheelShaft_Length > 2 * wheelShaft_DD_Length,
+        "wheelShaft_Length must be greater than 2 * wheelShaft_DD_Length")
+    wheelShaft_Length / 2 - wheelShaft_DD_Length;
 
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
@@ -172,8 +180,7 @@ module shaft(angle)
 
     module axle_shaft()
     {
-        half_length = wheelShaft_Length / 2;
-        round_part_length = half_length - wheelShaft_DD_Length; 
+        round_part_length = wheel_shaft_round_part_length();
 
         cylinder(d = wheelShaft_Diameter, h = round_part_length, center=false);
 
@@ -290,6 +297,8 @@ module tt_motor_preview(
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise)
 {
+    assert($children <= 2, str("tt_motor_preview expects 0, 1, or 2 wheel children, got ", $children));
+
     translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
     {
         color([0.953, 0.725, 0.263])// TODO, move this and other colors to input parameters :)
@@ -359,12 +368,28 @@ module tt_motor_preview(
             rotate([-90, 0, 180])
                 motor130_preview();
 
-        // shaft
-        color(wheelShaft_Color)
-            translate([0, wheelShaft_Offset])
-            {
+        // shaft and optional wheel callbacks
+        translate([0, wheelShaft_Offset])
+        {
+            color(wheelShaft_Color)
                 shaft(shaft_angle);
-            }
+
+            if ($children > 0)
+                rotate([0, 0, shaft_angle])
+                {
+                    round_part_length = wheel_shaft_round_part_length();
+
+                    translate([0, 0, round_part_length])
+                        children(0);
+
+                    rotate([180, 0, 0])
+                        translate([0, 0, round_part_length])
+                            if ($children == 2)
+                                children(1);
+                            else
+                                children(0);
+                }
+        }
 
         color("gray", 0.5)
             translate([0, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness, motor_Side_Offset])
@@ -593,13 +618,81 @@ module motor_mounting_part()
     }
 }
 
+// demo spoked wheel with DD bore and indicator spoke so shaft rotation is clearly visible
+module _preview_demo_wheel(diameter = 34, width = 8)
+{
+    tire_thickness = 2.5;
+    rim_outer_d = diameter - 2 * tire_thickness;
+    rim_inner_d = rim_outer_d - 3;
+    hub_diameter = max(10, wheelShaft_Diameter + 3);
+    spoke_count = 5;
+    spoke_width = 2.4;
+    rim_thickness = width - 1.5;
+    spoke_thickness = rim_thickness - 2 * EPSILON;
+    spoke_length = rim_inner_d / 2 - hub_diameter / 2 + 1;
+
+    assert(diameter > 0 && width > 1.5 + 2 * EPSILON, "Demo wheel width must exceed 1.5 + 2 * EPSILON");
+    assert(rim_inner_d > hub_diameter, "Demo wheel diameter is too small for the inner rim and hub");
+    assert(wheelShaft_Diameter > 0 && wheelShaft_DD_Thickness > 0, "Wheel shaft dimensions must be positive");
+
+    // outer rubber tire with radial tread ribs
+    color("#2b2b2b")
+    {
+        difference()
+        {
+            cylinder(d = diameter, h = width);
+            translate([0, 0, -EPSILON])
+                cylinder(d = rim_outer_d - EPSILON, h = width + 2 * EPSILON);
+        }
+
+        for (i = [0 : 11])
+            rotate([0, 0, i * 30])
+                translate([diameter / 2 - 0.3, 0, width / 2])
+                    cube([1.0, 2.0, width], center = true);
+    }
+
+    // hub with DD shaft bore
+    color("#f2c94c")
+    {
+        difference()
+        {
+            cylinder(d = hub_diameter, h = width);
+            translate([0, 0, -EPSILON])
+                dd_shaft(
+                    length = width + 2 * EPSILON,
+                    diameter = wheelShaft_Diameter + 2 * EPSILON,
+                    thickness = wheelShaft_DD_Thickness + 2 * EPSILON);
+        }
+
+        // inner rim
+        translate([0, 0, (width - rim_thickness) / 2])
+            difference()
+            {
+                cylinder(d = rim_outer_d, h = rim_thickness);
+                translate([0, 0, -EPSILON])
+                    cylinder(d = rim_inner_d, h = rim_thickness + 2 * EPSILON);
+            }
+    }
+
+    // 5 spokes (spoke 0 highlighted in red to show exact shaft angle)
+    for (i = [0 : spoke_count - 1])
+        color(i == 0 ? "#d94a38" : "#f2c94c")
+            rotate([0, 0, i * 360 / spoke_count])
+                translate([hub_diameter / 2 - 0.5 + spoke_length / 2, 0, width / 2])
+                    cube([spoke_length, spoke_width, spoke_thickness], center = true);
+}
+
 // the main rendering part
 module _tt_motor_scene()
 {
-    module preview_aligned()
+    module preview_aligned(with_wheels = false, angle = 90)
     {
         rotate([0, -90, 0])
-            tt_motor_preview(shaft_angle = 90);
+            if (with_wheels)
+                tt_motor_preview(shaft_angle = angle)
+                    _preview_demo_wheel();
+            else
+                tt_motor_preview(shaft_angle = angle);
     }
 
     module placeholder_aligned()
@@ -611,10 +704,14 @@ module _tt_motor_scene()
     if (preview_Mode == "placeholder")
         placeholder_aligned();
     else if (preview_Mode == "preview")
-        preview_aligned();
+        preview_aligned(angle = preview_Shaft_Angle);
+    else if (preview_Mode == "preview_with_wheels")
+        preview_aligned(with_wheels = true, angle = preview_Shaft_Angle);
+    else if (preview_Mode == "wheel_only")
+        _preview_demo_wheel();
     else if (preview_Mode == "both")
     {
-        preview_aligned();
+        preview_aligned(angle = preview_Shaft_Angle);
         translate([preview_Placeholder_Offset, 0, 0])
             placeholder_aligned();
     }
@@ -655,7 +752,7 @@ module _tt_motor_scene()
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
-                "', expected one of: placeholder, preview, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+                "', expected one of: placeholder, preview, preview_with_wheels, wheel_only, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
 }
 
 _tt_motor_scene();
