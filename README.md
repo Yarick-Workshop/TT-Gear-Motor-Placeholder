@@ -82,10 +82,11 @@ rotate([0, -90, 0])
 
 Under the **Preview** tab in the Customizer:
 - `preview_Shaft_Angle` (default `90`, range `0`–`360`) — rotates the wheel shaft and any attached preview wheels.
-- `preview_Show_Wheels` (default `true`) — attaches an asymmetric spoked demo wheel (with a DD center bore and red 0° indicator spoke) to both shaft ends in `"preview"` and `"both"` modes so shaft rotation is clearly visible. Placeholder comparison modes (`"xor"`, `"placeholder_minus_preview"`, `"preview_minus_placeholder"`) omit demo wheels.
-- `"both"` (**default**) — draws `tt_motor_preview()` and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, `preview_Placeholder_Gap` (default `10` mm), and (when `preview_Show_Wheels` is enabled) the demo wheel width.
+- `"both"` (**default**) — draws `tt_motor_preview()` (without wheels) and `tt_motor_placeholder()` side-by-side along world `X`, separated by a calculated offset from the model dimensions, `placeholder_Hole_Length`, `placeholder_Clearance`, and `preview_Placeholder_Gap` (default `10` mm).
 - `"placeholder"` — draws only `tt_motor_placeholder()` at the origin.
-- `"preview"` — draws only `tt_motor_preview()` at the origin.
+- `"preview"` — draws only `tt_motor_preview()` at the origin (without wheels).
+- `"preview_with_wheels"` — draws `tt_motor_preview()` with an asymmetric spoked demo wheel (with a DD center bore and red 0° indicator spoke) mounted to both shaft ends and rotated by `preview_Shaft_Angle`.
+- `"wheel_only"` — draws only the demo wheel at `[0, 0, 0]` without any translations, rotations, or motor geometry.
 - `"xor"` — symmetric difference of both modules at the same origin.
 - `"placeholder_minus_preview"` — subtracts `tt_motor_preview()` from `tt_motor_placeholder()` at the same origin.
 - `"preview_minus_placeholder"` — subtracts `tt_motor_placeholder()` from `tt_motor_preview()` at the same origin (to check for geometry protruding outside the placeholder; with default motor dimensions, when `hole_length >= wheelShaft_Length` and `clearance >= 0`, all preview geometry is enclosed).

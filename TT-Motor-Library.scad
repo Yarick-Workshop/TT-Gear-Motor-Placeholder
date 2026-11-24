@@ -87,10 +87,9 @@ placeholder_Hole_Length = 100;
 placeholder_Clearance = 0.5;
 
 /* [Preview] */
-preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Mode = "both"; // [placeholder:Placeholder, preview:Preview, preview_with_wheels:Preview with wheels, wheel_only:Wheel only, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
 preview_Placeholder_Gap = 10;
 preview_Shaft_Angle = 90; // [0:1:360]
-preview_Show_Wheels = true;
 
 /* [Hidden] */
 EPSILON = 0.01;
@@ -107,9 +106,6 @@ motor_Box_Width = max(
     belt_Ring_External_Diameter);
 preview_Pos_X_Extent = max(
     wheelShaft_Length / 2,
-    preview_Show_Wheels && (preview_Mode == "preview" || preview_Mode == "both")
-        ? wheel_shaft_round_part_length() + _preview_Wheel_Width
-        : 0,
     gearBox_Width / 2 + gearBox_Pin_Height,
     mountingHoleBox_Height / 2,
     motor_Box_Width / 2 - motor_Side_Offset);
@@ -699,10 +695,14 @@ module _tt_motor_scene()
     if (preview_Mode == "placeholder")
         placeholder_aligned();
     else if (preview_Mode == "preview")
-        preview_aligned(with_wheels = preview_Show_Wheels);
+        preview_aligned();
+    else if (preview_Mode == "preview_with_wheels")
+        preview_aligned(with_wheels = true);
+    else if (preview_Mode == "wheel_only")
+        _preview_demo_wheel();
     else if (preview_Mode == "both")
     {
-        preview_aligned(with_wheels = preview_Show_Wheels);
+        preview_aligned();
         translate([preview_Placeholder_Offset, 0, 0])
             placeholder_aligned();
     }
@@ -743,7 +743,7 @@ module _tt_motor_scene()
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
-                "', expected one of: placeholder, preview, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+                "', expected one of: placeholder, preview, preview_with_wheels, wheel_only, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
 }
 
 _tt_motor_scene();
