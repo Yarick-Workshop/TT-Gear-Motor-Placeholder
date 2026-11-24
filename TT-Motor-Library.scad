@@ -310,8 +310,11 @@ module tt_motor_preview(
     assert(is_bool(show_body), "show_body must be a boolean");
     assert(is_bool(show_shaft), "show_shaft must be a boolean");
 
+    origin_x = origin_heightwise_offset(origin_heightwise);
+    origin_y = origin_lengthwise_offset(origin_lengthwise);
+
     if (show_body || show_shaft || $children > 0)
-        translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
+        translate([origin_x, origin_y, 0])
         {
             if (show_body)
             {
