@@ -86,18 +86,27 @@ rotate([0, -90, 0])
 
 ## Shaft Cutouts & Fit Calibration (`tt_motor_shaft_placeholder`, `tt_motor_shaft_hole_test`)
 
-`tt_motor_shaft_placeholder(clearance = placeholder_Shaft_Clearance, dd_length = wheelShaft_DD_Length, round_length = wheel_shaft_round_part_length(), dd_below_length = placeholder_Shaft_DD_Below_Length)` produces a **vertical** negative-volume shaft half for cutting sockets into wheels and hubs (DD flats at `±Y`, curved faces at `±X`): `Z = 0` marks the physical DD shaft tip, the DD section spans `[-dd_below_length, dd_length]` (extending below `Z = 0` by `20` mm by default to cut clean through-DD holes for easy post-print filing; set `dd_below_length = 0` for a blind pocket), and the round collar spans `[dd_length, dd_length + round_length]` (`wheel_shaft_round_part_length() = 11` mm by default). Its default clearance (`placeholder_Shaft_Clearance = 0.1` mm) is separate from the motor housing's `placeholder_Clearance` (`0.5` mm).
+`tt_motor_shaft_placeholder(clearance = placeholder_Shaft_Clearance, dd_length = tt_motor_shaft_dd_length(), round_length = wheel_shaft_round_part_length(), dd_below_length = placeholder_Shaft_DD_Below_Length)` produces a **vertical** negative-volume shaft half for cutting sockets into wheels and hubs (DD flats at `±Y`, curved faces at `±X`): `Z = 0` marks the physical DD shaft tip, the DD section spans `[-dd_below_length, dd_length]` (extending below `Z = 0` by `20` mm by default to cut clean through-DD holes for easy post-print filing; set `dd_below_length = 0` for a blind pocket), and the round collar spans `[dd_length, dd_length + round_length]` (`wheel_shaft_round_part_length() = 11` mm by default). Its default clearance (`placeholder_Shaft_Clearance = 0.1` mm) is separate from the motor housing's `placeholder_Clearance` (`0.5` mm).
 
-`tt_motor_shaft_hole_test(shaft_depth = tt_motor_shaft_dd_length() + tt_motor_shaft_placeholder_round_length(), height = 2 * tt_motor_shaft_dd_length(), outer_diameter = undef, hub_diameter = 0, base_height = 2.0, shaft_slot_angle = 0)` prints a compact calibration puck (`12` mm tall by default = `2 * wheelShaft_DD_Length`) with `shaft_depth = 6.65` mm (`6.0` mm DD + `0.65` mm round collar, leaving `1.0` mm clearance to the gearbox body) for tuning `clearance`. When `outer_diameter` is omitted (`undef`), it defaults to `tt_motor_shaft_test_outer_diameter(hub_diameter = hub_diameter)`. It requires **exactly 1 child** (the cutting placeholder):
+`tt_motor_shaft_hole_test(shaft_depth = tt_motor_shaft_dd_length() + tt_motor_shaft_placeholder_round_length(), height = 2 * tt_motor_shaft_dd_length(), outer_diameter = undef, hub_diameter = 0, base_height = 2.0, shaft_slot_angle = 0)` prints a compact calibration puck (`12` mm tall by default = `2 * wheelShaft_DD_Length`) with `shaft_depth = 6.65` mm (`6.0` mm DD + `0.65` mm round collar, leaving `1.0` mm clearance to the gearbox body) for tuning `clearance`. When `outer_diameter` is omitted (`undef`), it defaults to `tt_motor_shaft_test_outer_diameter(hub_diameter = hub_diameter)`. It requires **exactly 1 child** (the cutting placeholder), which must extend at least `shaft_depth` above `Z = 0` (pass `shaft_depth = tt_motor_shaft_dd_length()` when testing `round_length = 0`):
 
 ```openscad
 use <TT-Motor-Library.scad>
 $fn = 64; // Library inherits caller's $fn
 
+// Cut a DD + round lead-in socket into a 12 mm flat-printed wheel/hub (inner face at Z = 12)
+difference() {
+    cylinder(d = 20, h = 12);
+    translate([0, 0, 12 - 6.65])
+        tt_motor_shaft_placeholder(clearance = 0.1);
+}
+
 // Print a quick DD shaft fit calibration puck
 tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
     tt_motor_shaft_placeholder(clearance = 0.1);
 ```
+
+> **Flat-printed vs. `tt_motor_preview()` wheel orientation:** `tt_motor_shaft_placeholder()` is oriented for flat-printed wheels (outer wheel face at `Z = 0`, motor-facing hub face at `+Z`), which is `rotate([180, 0, 0])` inverted relative to `tt_motor_preview()`'s outward-facing wheel mounting frame (for the 12 mm wheel above, mount it via `translate([0, 0, 12 - 0.65]) rotate([180, 0, 0]) my_wheel();`).
 
 > **Through-hole vs. blind pocket:** With the default `dd_below_length = 20` mm, `tt_motor_shaft_placeholder()` cuts a through-DD bore all the way out the bottom of the puck, and `shaft_depth` sets how deep the round collar extends from the top face (`shaft_depth - dd_length`, i.e., `0.65` mm by default). Pass `dd_below_length = 0` to `tt_motor_shaft_placeholder()` if you want a blind pocket of exact depth `shaft_depth` with an internal bottom stop.
 
@@ -144,7 +153,7 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 
 - **`[Origin]`** — choose default lengthwise and heightwise origins (`origin_Lengthwise`, `origin_Heightwise`).
 - **`[Placeholder]`** — set default `placeholder_Hole_Length`, `placeholder_Clearance` (housing), `placeholder_Shaft_Clearance` (wheel shaft socket, default `0.1` mm), `placeholder_Shaft_DD_Below_Length` (DD through-hole extension below `Z = 0`, default `20` mm), and `placeholder_Shaft_Gearbox_Clearance` (margin kept between the round shaft collar and the gearbox body, default `1.0` mm).
-- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"placeholder_shaft"`, `"preview"`, `"preview_with_wheels"`, and `"both"`; comparison modes keep `shaft_angle = 90`), `preview_Show_Body` and `preview_Show_Shaft` (both default `true` — toggle body/shaft visibility in `"preview"`, `"preview_with_wheels"`, and `"both"`, and serve as defaults for `tt_motor_preview()`; comparison modes always render both), `preview_Fn` (default `64` — standalone preview resolution), and `preview_Mode`:
+- **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`, and rotates the cutting shaft placeholder and calibration puck slot in `"placeholder_shaft"`; comparison modes keep `shaft_angle = 90` and `"shaft_test"` keeps `shaft_slot_angle = 0`), `preview_Show_Body` and `preview_Show_Shaft` (both default `true` — toggle body/shaft visibility in `"preview"`, `"preview_with_wheels"`, and `"both"`, and serve as defaults for `tt_motor_preview()`; comparison modes always render both), `preview_Fn` (default `64` — standalone preview resolution), and `preview_Mode`:
   - `"both"` (**default**) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
   - `"placeholder"` — shows only the negative-volume cutout (`tt_motor_placeholder()`).
   - `"placeholder_shaft"` — shows both the vertical cutting shaft placeholder (`tt_motor_shaft_placeholder()`) and the shaft fit calibration puck (`tt_motor_shaft_hole_test()`) side by side, separated by `preview_Placeholder_Gap`.

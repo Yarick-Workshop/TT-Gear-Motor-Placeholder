@@ -541,12 +541,7 @@ module tt_motor_placeholder(
 }
 
 /*
-    Vertical negative-volume cutting placeholder for one TT motor output shaft end (DD + round collar).
-    Z = 0 marks the physical DD shaft tip:
-      - [-dd_below_length, dd_length]: double-D section (extends below Z = 0 for through-hole wheel cuts
-        so internal flats can be cleaned with a file; set dd_below_length = 0 for a blind pocket)
-      - [dd_length, dd_length + round_length]: round shaft collar
-    DD flats are at +-Y, curved faces at +-X.
+    Vertical shaft cutting placeholder (Z = 0 at DD tip; DD [-dd_below_length, dd_length], round above; flats +-Y).
     TODO: add optional M2 retaining screw through-hole and outer screw-head recess support.
 */
 module tt_motor_shaft_placeholder(
@@ -585,8 +580,7 @@ module tt_motor_shaft_placeholder(
 }
 
 /*
-    3D-printable calibration puck for testing fit against a vertical shaft cutting placeholder.
-    Requires exactly 1 child (the cutting placeholder, e.g. tt_motor_shaft_placeholder()).
+    Calibration puck for a single cutting-placeholder child (must extend >= shaft_depth above Z = 0).
     TODO: support optional M2 retaining screw hole / head recess once added to tt_motor_shaft_placeholder().
 */
 module tt_motor_shaft_hole_test(
@@ -637,22 +631,26 @@ module tt_motor_shaft_hole_test(
         {
             is_through_socket = shaft_depth >= total_height - EPSILON * 0.5;
             cut_start_z = total_height - shaft_depth;
+            slice_eps = min(EPSILON / 2, shaft_depth / 2);
 
             rotate([0, 0, shaft_slot_angle])
                 union()
                 {
                     translate([0, 0, cut_start_z])
-                    {
                         children(0);
-                        translate([0, 0, EPSILON])
-                            children(0);
-                    }
+
+                    // Extend the top cross-section past total_height without shifting internal child geometry.
+                    translate([0, 0, total_height - EPSILON])
+                        linear_extrude(height = 2 * EPSILON)
+                            projection(cut = true)
+                                translate([0, 0, -shaft_depth + slice_eps])
+                                    children(0);
 
                     if (is_through_socket)
                         translate([0, 0, -EPSILON])
                             linear_extrude(height = 2 * EPSILON)
                                 projection(cut = true)
-                                    translate([0, 0, -cut_start_z - EPSILON / 2])
+                                    translate([0, 0, -cut_start_z - slice_eps])
                                         children(0);
                 }
         }
