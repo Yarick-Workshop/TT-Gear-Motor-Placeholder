@@ -130,6 +130,15 @@ tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
 - `clearance` (default `placeholder_Clearance = 0.5`) — per-side fit margin (in mm) added to the gearbox, front lug, motor/belt cover, side pin, and wheel shaft opening (`wheelShaft_Diameter + 2 * clearance`) so a real motor slides into a 3D-printed pocket and the axle spins freely without rubbing.
 - `hole_diameter` (default `mountingHole_Diameter = 2.8`) — diameter of the three mounting screw cylinders (`2.8` mm suits self-tapping M3 screws in plastic; pass e.g. `3.2`–`3.4` mm for M3 clearance holes).
 
+### Fit Test Enclosure (`tt_motor_test_enclosure`)
+
+`tt_motor_test_enclosure(min_wall_thickness = 2, wheel_cylinder_diameter = 12, clearance = placeholder_Clearance, hole_diameter = mountingHole_Diameter, part = "both", assembled = false, gap = preview_Placeholder_Gap, origin_lengthwise = origin_Lengthwise, origin_heightwise = origin_Heightwise)` generates a printable two-half rectangular test enclosure around `tt_motor_placeholder()`, split along `Z = 0` (`-Z` and `+Z` halves):
+
+- `min_wall_thickness` (default `testEnclosure_Min_Wall_Thickness = 2`) — minimum wall thickness (in mm) added around all outer faces of the `tt_motor_placeholder()` bounding box.
+- `wheel_cylinder_diameter` (default `testEnclosure_Wheel_Cylinder_Diameter = 12`) — diameter (in mm) of the cylindrical wheel-hub clearance cutout through both side walls around the wheel shaft (`0` disables the extra cylinder, leaving only `tt_motor_placeholder()`'s shaft opening).
+- `part` — `"both"` (default), `"neg_z"`, or `"pos_z"`.
+- `assembled` (default `testEnclosure_Assembled = false`) — when `false`, lays both halves flat on `Z = 0` with their cavities facing `+Z` (separated by `gap` along `X`) for support-free printing; when `true`, positions both halves assembled around the motor origin.
+
 ## Origin & Alignment Options
 
 Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise, show_body, show_shaft)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`. Mode names are case-sensitive.
@@ -153,6 +162,7 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 
 - **`[Origin]`** — choose default lengthwise and heightwise origins (`origin_Lengthwise`, `origin_Heightwise`).
 - **`[Placeholder]`** — set default `placeholder_Hole_Length`, `placeholder_Clearance` (housing), `placeholder_Shaft_Clearance` (wheel shaft socket, default `0.1` mm), `placeholder_Shaft_DD_Below_Length` (DD through-hole extension below `Z = 0`, default `20` mm), and `placeholder_Shaft_Gearbox_Clearance` (margin kept between the round shaft collar and the gearbox body, default `1.0` mm).
+- **`[Test Enclosure]`** — set `testEnclosure_Min_Wall_Thickness` (default `2` mm), `testEnclosure_Wheel_Cylinder_Diameter` (default `12` mm), and `testEnclosure_Assembled` (default `false` for print-ready layout).
 - **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`, and rotates the cutting shaft placeholder and calibration puck slot in `"placeholder_shaft"`; comparison modes keep `shaft_angle = 90` and `"shaft_test"` keeps `shaft_slot_angle = 0`), `preview_Show_Body` and `preview_Show_Shaft` (both default `true` — toggle body/shaft visibility in `"preview"`, `"preview_with_wheels"`, and `"both"`, and serve as defaults for `tt_motor_preview()`; comparison modes always render both), `preview_Fn` (default `64` — standalone preview resolution), and `preview_Mode`:
   - `"both"` (**default**) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
   - `"placeholder"` — shows only the negative-volume cutout (`tt_motor_placeholder()`).
@@ -161,6 +171,7 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
   - `"preview_with_wheels"` — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
   - `"wheel_only"` — shows only the demo wheel at `[0, 0, 0]` for quick inspection.
   - `"shaft_test"` — shows only the printable DD shaft fit calibration puck (`tt_motor_shaft_hole_test()` cut by `tt_motor_shaft_placeholder()`).
+  - `"test_enclosure"` — shows the two-half printable test enclosure (`tt_motor_test_enclosure()`), either laid flat side-by-side (`testEnclosure_Assembled = false`) or assembled (`testEnclosure_Assembled = true`).
   - `"xor"` — shows the symmetric difference between preview and placeholder at the same origin.
   - `"placeholder_minus_preview"` — subtracts the motor model from the cutout volume to inspect clearance space around the motor.
   - `"preview_minus_placeholder"` — subtracts the cutout volume from the motor model to verify nothing sticks out (empty with default dimensions when `clearance >= 0`).
