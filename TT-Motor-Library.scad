@@ -90,10 +90,9 @@ placeholder_Shaft_Gearbox_Clearance = 1.0;
 /* [Test Enclosure] */
 testEnclosure_Min_Wall_Thickness = 2;
 testEnclosure_Wheel_Cylinder_Diameter = 12;
-testEnclosure_Assembled = false;
 
 /* [Preview] */
-preview_Mode = "both"; // [placeholder:Placeholder, placeholder_shaft:Placeholder shaft, preview:Preview, preview_with_wheels:Preview with wheels, wheel_only:Wheel only, shaft_test:Shaft fit test, test_enclosure:Test enclosure, both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Mode = "both"; // [placeholder:Placeholder, placeholder_shaft:Placeholder shaft, preview:Preview, preview_with_wheels:Preview with wheels, wheel_only:Wheel only, shaft_test:Shaft fit test, test_enclosure:Test enclosure, test_enclosure_assembled:Test enclosure (assembled), both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
 preview_Placeholder_Gap = 10;
 preview_Shaft_Angle = 90; // [0:1:360]
 preview_Show_Body = true;
@@ -578,7 +577,7 @@ module tt_motor_test_enclosure(
     clearance = placeholder_Clearance,
     hole_diameter = mountingHole_Diameter,
     part = "both",
-    assembled = testEnclosure_Assembled,
+    assembled = false,
     gap = preview_Placeholder_Gap,
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise)
@@ -592,6 +591,9 @@ module tt_motor_test_enclosure(
         part == "both" || part == "pos_z" || part == "neg_z",
         str("Unknown part '", part, "', expected one of: both, pos_z, neg_z"));
 
+    origin_x = origin_heightwise_offset(origin_heightwise);
+    origin_y = origin_lengthwise_offset(origin_lengthwise);
+
     ext = _tt_motor_placeholder_extents(clearance);
     outer_min_x = ext[0] - min_wall_thickness;
     outer_max_x = ext[1] + min_wall_thickness;
@@ -604,6 +606,13 @@ module tt_motor_test_enclosure(
     outer_size_y = outer_max_y - outer_min_y;
     outer_size_z = outer_max_z - outer_min_z;
     cut_hole_length = 2 * max(abs(outer_min_z), abs(outer_max_z)) + 4 * EPSILON;
+    assembled_seam_gap = 0.1;
+
+    assert(
+        wheel_cylinder_diameter < outer_size_x &&
+        wheelShaft_Offset - wheel_cylinder_diameter / 2 > outer_min_y &&
+        wheelShaft_Offset + wheel_cylinder_diameter / 2 < outer_max_y,
+        "wheel_cylinder_diameter exceeds enclosure outer walls");
 
     module enclosure_body()
     {
@@ -625,34 +634,26 @@ module tt_motor_test_enclosure(
         }
     }
 
-    module half_neg_z()
+    module enclosure_half(z_start, z_height)
     {
         intersection()
         {
             enclosure_body();
-            translate([outer_min_x - EPSILON, outer_min_y - EPSILON, outer_min_z - EPSILON])
-                cube([outer_size_x + 2 * EPSILON, outer_size_y + 2 * EPSILON, -outer_min_z + EPSILON]);
-        }
-    }
-
-    module half_pos_z()
-    {
-        intersection()
-        {
-            enclosure_body();
-            translate([outer_min_x - EPSILON, outer_min_y - EPSILON, 0])
-                cube([outer_size_x + 2 * EPSILON, outer_size_y + 2 * EPSILON, outer_max_z + EPSILON]);
+            translate([outer_min_x - EPSILON, outer_min_y - EPSILON, z_start])
+                cube([outer_size_x + 2 * EPSILON, outer_size_y + 2 * EPSILON, z_height]);
         }
     }
 
     if (assembled)
     {
-        translate([origin_heightwise_offset(origin_heightwise), origin_lengthwise_offset(origin_lengthwise), 0])
+        translate([origin_x, origin_y, 0])
         {
             if (part == "both" || part == "neg_z")
-                half_neg_z();
+                translate([0, 0, -assembled_seam_gap / 2])
+                    enclosure_half(outer_min_z - EPSILON, -outer_min_z + EPSILON);
             if (part == "both" || part == "pos_z")
-                half_pos_z();
+                translate([0, 0, assembled_seam_gap / 2])
+                    enclosure_half(0, outer_max_z + EPSILON);
         }
     }
     else
@@ -663,12 +664,12 @@ module tt_motor_test_enclosure(
 
         if (part == "both" || part == "neg_z")
             translate([neg_z_x_offset, -y_center, -outer_min_z])
-                half_neg_z();
+                enclosure_half(outer_min_z - EPSILON, -outer_min_z + EPSILON);
         if (part == "both" || part == "pos_z")
             translate([pos_z_x_offset, 0, outer_max_z])
                 rotate([180, 0, 0])
                     translate([0, -y_center, 0])
-                        half_pos_z();
+                        enclosure_half(0, outer_max_z + EPSILON);
     }
 }
 
@@ -1045,11 +1046,14 @@ module _tt_motor_scene()
         tt_motor_shaft_hole_test()
             tt_motor_shaft_placeholder();
     else if (preview_Mode == "test_enclosure")
-        if (testEnclosure_Assembled)
-            rotate([0, -90, 0])
-                tt_motor_test_enclosure();
-        else
-            tt_motor_test_enclosure();
+    {
+        tt_motor_test_enclosure(assembled = false);
+    }
+    else if (preview_Mode == "test_enclosure_assembled")
+    {
+        rotate([0, -90, 0])
+            tt_motor_test_enclosure(assembled = true);
+    }
     else if (preview_Mode == "both")
     {
         preview_aligned(
@@ -1096,7 +1100,7 @@ module _tt_motor_scene()
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
-                "', expected one of: placeholder, placeholder_shaft, preview, preview_with_wheels, wheel_only, shaft_test, test_enclosure, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+                "', expected one of: placeholder, placeholder_shaft, preview, preview_with_wheels, wheel_only, shaft_test, test_enclosure, test_enclosure_assembled, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
 }
 
 _tt_motor_scene($fn = preview_Fn);
