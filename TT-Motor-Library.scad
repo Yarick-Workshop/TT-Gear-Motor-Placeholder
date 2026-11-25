@@ -590,6 +590,7 @@ module tt_motor_test_enclosure(
     assert(
         part == "both" || part == "pos_z" || part == "neg_z",
         str("Unknown part '", part, "', expected one of: both, pos_z, neg_z"));
+    assert(is_bool(assembled), "assembled must be a boolean");
 
     origin_x = origin_heightwise_offset(origin_heightwise);
     origin_y = origin_lengthwise_offset(origin_lengthwise);

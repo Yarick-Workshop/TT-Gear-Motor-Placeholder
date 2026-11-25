@@ -144,7 +144,7 @@ tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
 
 ## Origin & Alignment Options
 
-Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise, show_body, show_shaft)` and `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`. Mode names are case-sensitive.
+Alignment can be changed in the OpenSCAD Customizer under the **Origin** tab (`origin_Lengthwise`, `origin_Heightwise`) or passed directly to `tt_motor_preview(shaft_angle = 0, origin_lengthwise, origin_heightwise, show_body, show_shaft)`, `tt_motor_placeholder(origin_lengthwise, origin_heightwise, hole_length, clearance, hole_diameter)`, and `tt_motor_test_enclosure(..., assembled = true, origin_lengthwise, origin_heightwise)`. Mode names are case-sensitive.
 
 ### Lengthwise (`origin_Lengthwise` / `origin_lengthwise`)
 - `"shaft"` (**default**) — places `0` at the center of the wheel shaft.
@@ -167,7 +167,7 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 - **`[Placeholder]`** — set default `placeholder_Hole_Length`, `placeholder_Clearance` (housing), `placeholder_Shaft_Clearance` (wheel shaft socket, default `0.1` mm), `placeholder_Shaft_DD_Below_Length` (DD through-hole extension below `Z = 0`, default `20` mm), and `placeholder_Shaft_Gearbox_Clearance` (margin kept between the round shaft collar and the gearbox body, default `1.0` mm).
 - **`[Test Enclosure]`** — set `testEnclosure_Min_Wall_Thickness` (default `2` mm) and `testEnclosure_Wheel_Cylinder_Diameter` (default `12` mm).
 - **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`, and rotates the cutting shaft placeholder and calibration puck slot in `"placeholder_shaft"`; comparison modes keep `shaft_angle = 90` and `"shaft_test"` keeps `shaft_slot_angle = 0`), `preview_Show_Body` and `preview_Show_Shaft` (both default `true` — toggle body/shaft visibility in `"preview"`, `"preview_with_wheels"`, and `"both"`, and serve as defaults for `tt_motor_preview()`; comparison modes always render both), `preview_Fn` (default `64` — standalone preview resolution), and `preview_Mode`:
-  - `"both"` (**default**, *Motor & Cutout (both)*) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
+  - `"both"` (**default**, *Motor & Cutout*) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
   - `"preview"` (*View - Motor*) — shows only the motor model (`tt_motor_preview()`) with its wheel shaft rotated by `preview_Shaft_Angle`.
   - `"preview_with_wheels"` (*View - Motor + Wheels*) — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
   - `"wheel_only"` (*View - Demo Wheel*) — shows only the demo wheel at `[0, 0, 0]` for quick inspection.
