@@ -92,7 +92,7 @@ testEnclosure_Min_Wall_Thickness = 2;
 testEnclosure_Wheel_Cylinder_Diameter = 12;
 
 /* [Preview] */
-preview_Mode = "both"; // [both:Motor & Cutout, preview:View - Motor, preview_with_wheels:View - Motor + Wheels, wheel_only:View - Demo Wheel, test_enclosure_assembled:View - Test Box (assembled), placeholder:Cutout - Motor, placeholder_shaft:Cutout - Shaft & Puck, test_enclosure:Print - Test Box (flat), shaft_test:Print - Shaft Fit, placeholder_minus_preview:Check - Clearance Gap, preview_minus_placeholder:Check - Protrusions, xor:Check - Fit Diff (XOR)]
+preview_Mode = "both"; // [both:Motor & Cutout, preview:View - Motor, preview_with_wheels:View - Motor + Wheels, wheel_only:View - Demo Wheel, test_enclosure_assembled:View - Test Box (assembled), projections:2D - Projections (Side & Top), placeholder:Cutout - Motor, placeholder_shaft:Cutout - Shaft & Puck, test_enclosure:Print - Test Box (flat), shaft_test:Print - Shaft Fit, placeholder_minus_preview:Check - Clearance Gap, preview_minus_placeholder:Check - Protrusions, xor:Check - Fit Diff (XOR)]
 preview_Placeholder_Gap = 10;
 preview_Shaft_Angle = 90; // [0:1:360]
 preview_Show_Body = true;
@@ -676,6 +676,80 @@ module tt_motor_test_enclosure(
 }
 
 /*
+    2D orthographic projections of tt_motor_preview() onto the X-Y plane (for inspection or SVG/DXF export).
+    view:
+      - "both" (default): side and top projections placed side-by-side on the same page along X separated by `gap`
+      - "side": side profile (shaft hidden so the shaft bore is open; side pin shown as an outline ring cutout)
+      - "top": top-down profile (matching rotate([0, -90, 0]) top view; shows dual DD shafts, side pin profile, belt, and motor)
+    `shaft_angle` defaults to 0 so the DD shaft flats (±Y) are visible in the top projection.
+*/
+module tt_motor_projection(
+    view = "both",
+    shaft_angle = 0,
+    origin_lengthwise = origin_Lengthwise,
+    origin_heightwise = origin_Heightwise,
+    gap = preview_Placeholder_Gap,
+    pin_ring_thickness = 0.4)
+{
+    assert(
+        view == "both" || view == "side" || view == "top",
+        str("Unknown view '", view, "', expected one of: both, side, top"));
+    assert(gap >= 0, "gap must be non-negative");
+    assert(pin_ring_thickness > 0, "pin_ring_thickness must be positive");
+
+    origin_x = origin_heightwise_offset(origin_heightwise);
+    origin_y = origin_lengthwise_offset(origin_lengthwise);
+
+    side_half_x = max(
+        gearBox_Height,
+        mountingHoleBox_Width,
+        _tt_motor_placeholder_motor_box_height(),
+        gearBox_Pin_Diameter,
+        20) / 2;
+    top_min_x = -max(
+        wheelShaft_Length / 2,
+        gearBox_Width / 2,
+        mountingHoleBox_Height / 2,
+        motor_Side_Offset + motor_Box_Width / 2);
+    top_offset_x = (view == "both") ? (origin_x + side_half_x - top_min_x + gap) : 0;
+
+    if (view == "both" || view == "side")
+        difference()
+        {
+            projection(cut = false)
+                tt_motor_preview(
+                    shaft_angle = shaft_angle,
+                    origin_lengthwise = origin_lengthwise,
+                    origin_heightwise = origin_heightwise,
+                    show_body = true,
+                    show_shaft = false);
+
+            if (gearBox_Pin_Diameter > 0 && gearBox_Pin_Height > 0)
+            {
+                pin_inner_d = gearBox_Pin_Diameter - 2 * pin_ring_thickness;
+                translate([origin_x, origin_y + gearBox_Pin_Offset])
+                    difference()
+                    {
+                        circle(d = gearBox_Pin_Diameter);
+                        if (pin_inner_d > 0)
+                            circle(d = pin_inner_d);
+                    }
+            }
+        }
+
+    if (view == "both" || view == "top")
+        translate([top_offset_x, 0])
+            projection(cut = false)
+                rotate([0, -90, 0])
+                    tt_motor_preview(
+                        shaft_angle = shaft_angle,
+                        origin_lengthwise = origin_lengthwise,
+                        origin_heightwise = origin_heightwise,
+                        show_body = true,
+                        show_shaft = true);
+}
+
+/*
     Vertical shaft cutting placeholder (Z = 0 at DD tip; DD [-dd_below_length, dd_length], round above; flats +-Y).
     TODO: add optional M2 retaining screw through-hole and outer screw-head recess support.
 */
@@ -1049,6 +1123,10 @@ module _tt_motor_scene()
         rotate([0, -90, 0])
             tt_motor_test_enclosure(assembled = true);
     }
+    else if (preview_Mode == "projections")
+    {
+        tt_motor_projection(view = "both", shaft_angle = 0);
+    }
     else if (preview_Mode == "placeholder")
     {
         placeholder_aligned();
@@ -1113,7 +1191,7 @@ module _tt_motor_scene()
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
-                "', expected one of: both, preview, preview_with_wheels, wheel_only, test_enclosure_assembled, placeholder, placeholder_shaft, test_enclosure, shaft_test, placeholder_minus_preview, preview_minus_placeholder, xor"));
+                "', expected one of: both, preview, preview_with_wheels, wheel_only, test_enclosure_assembled, projections, placeholder, placeholder_shaft, test_enclosure, shaft_test, placeholder_minus_preview, preview_minus_placeholder, xor"));
     }
 }
 
