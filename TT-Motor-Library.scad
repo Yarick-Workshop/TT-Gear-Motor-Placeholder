@@ -609,10 +609,11 @@ module tt_motor_test_enclosure(
     assembled_seam_gap = 0.1;
 
     assert(
-        wheel_cylinder_diameter < outer_size_x &&
-        wheelShaft_Offset - wheel_cylinder_diameter / 2 > outer_min_y &&
-        wheelShaft_Offset + wheel_cylinder_diameter / 2 < outer_max_y,
-        "wheel_cylinder_diameter exceeds enclosure outer walls");
+        wheel_cylinder_diameter == 0 || (
+            wheel_cylinder_diameter <= ext[1] - ext[0] &&
+            wheelShaft_Offset - wheel_cylinder_diameter / 2 >= ext[2] &&
+            wheelShaft_Offset + wheel_cylinder_diameter / 2 <= ext[3]),
+        "wheel_cylinder_diameter leaves less than min_wall_thickness around enclosure walls");
 
     module enclosure_body()
     {
@@ -1015,7 +1016,9 @@ module _tt_motor_scene()
     }
 
     if (preview_Mode == "placeholder")
+    {
         placeholder_aligned();
+    }
     else if (preview_Mode == "placeholder_shaft")
     {
         shaft_test_offset =
@@ -1030,21 +1033,29 @@ module _tt_motor_scene()
                 tt_motor_shaft_placeholder();
     }
     else if (preview_Mode == "preview")
+    {
         preview_aligned(
             angle = preview_Shaft_Angle,
             show_body = preview_Show_Body,
             show_shaft = preview_Show_Shaft);
+    }
     else if (preview_Mode == "preview_with_wheels")
+    {
         preview_aligned(
             with_wheels = true,
             angle = preview_Shaft_Angle,
             show_body = preview_Show_Body,
             show_shaft = preview_Show_Shaft);
+    }
     else if (preview_Mode == "wheel_only")
+    {
         _preview_demo_wheel();
+    }
     else if (preview_Mode == "shaft_test")
+    {
         tt_motor_shaft_hole_test()
             tt_motor_shaft_placeholder();
+    }
     else if (preview_Mode == "test_enclosure")
     {
         tt_motor_test_enclosure(assembled = false);
@@ -1096,11 +1107,13 @@ module _tt_motor_scene()
         }
     }
     else
+    {
         assert(
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
                 "', expected one of: placeholder, placeholder_shaft, preview, preview_with_wheels, wheel_only, shaft_test, test_enclosure, test_enclosure_assembled, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+    }
 }
 
 _tt_motor_scene($fn = preview_Fn);
