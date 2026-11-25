@@ -92,7 +92,7 @@ testEnclosure_Min_Wall_Thickness = 2;
 testEnclosure_Wheel_Cylinder_Diameter = 12;
 
 /* [Preview] */
-preview_Mode = "both"; // [placeholder:Placeholder, placeholder_shaft:Placeholder shaft, preview:Preview, preview_with_wheels:Preview with wheels, wheel_only:Wheel only, shaft_test:Shaft fit test, test_enclosure:Test enclosure, test_enclosure_assembled:Test enclosure (assembled), both:Both (side by side), xor:XOR, placeholder_minus_preview:Placeholder - Preview, preview_minus_placeholder:Preview - Placeholder]
+preview_Mode = "both"; // [both:Motor & Cutout, preview:View - Motor, preview_with_wheels:View - Motor + Wheels, wheel_only:View - Demo Wheel, test_enclosure_assembled:View - Test Box (assembled), placeholder:Cutout - Motor, placeholder_shaft:Cutout - Shaft & Puck, test_enclosure:Print - Test Box (flat), shaft_test:Print - Shaft Fit, placeholder_minus_preview:Check - Clearance Gap, preview_minus_placeholder:Check - Protrusions, xor:Check - Fit Diff (XOR)]
 preview_Placeholder_Gap = 10;
 preview_Shaft_Angle = 90; // [0:1:360]
 preview_Show_Body = true;
@@ -1015,22 +1015,14 @@ module _tt_motor_scene()
             tt_motor_placeholder();
     }
 
-    if (preview_Mode == "placeholder")
+    if (preview_Mode == "both")
     {
-        placeholder_aligned();
-    }
-    else if (preview_Mode == "placeholder_shaft")
-    {
-        shaft_test_offset =
-            (tt_motor_shaft_diameter() + 2 * placeholder_Shaft_Clearance) / 2 +
-            tt_motor_shaft_test_outer_diameter() / 2 +
-            preview_Placeholder_Gap;
-
-        rotate([0, 0, preview_Shaft_Angle])
-            tt_motor_shaft_placeholder();
-        translate([shaft_test_offset, 0, 0])
-            tt_motor_shaft_hole_test(shaft_slot_angle = preview_Shaft_Angle)
-                tt_motor_shaft_placeholder();
+        preview_aligned(
+            angle = preview_Shaft_Angle,
+            show_body = preview_Show_Body,
+            show_shaft = preview_Show_Shaft);
+        translate([preview_Placeholder_Offset, 0, 0])
+            placeholder_aligned();
     }
     else if (preview_Mode == "preview")
     {
@@ -1051,44 +1043,36 @@ module _tt_motor_scene()
     {
         _preview_demo_wheel();
     }
-    else if (preview_Mode == "shaft_test")
-    {
-        tt_motor_shaft_hole_test()
-            tt_motor_shaft_placeholder();
-    }
-    else if (preview_Mode == "test_enclosure")
-    {
-        tt_motor_test_enclosure(assembled = false);
-    }
     else if (preview_Mode == "test_enclosure_assembled")
     {
         rotate([0, -90, 0])
             tt_motor_test_enclosure(assembled = true);
     }
-    else if (preview_Mode == "both")
+    else if (preview_Mode == "placeholder")
     {
-        preview_aligned(
-            angle = preview_Shaft_Angle,
-            show_body = preview_Show_Body,
-            show_shaft = preview_Show_Shaft);
-        translate([preview_Placeholder_Offset, 0, 0])
-            placeholder_aligned();
+        placeholder_aligned();
     }
-    else if (preview_Mode == "xor")
+    else if (preview_Mode == "placeholder_shaft")
     {
-        union()
-        {
-            difference()
-            {
-                placeholder_aligned();
-                preview_aligned();
-            }
-            difference()
-            {
-                preview_aligned();
-                placeholder_aligned();
-            }
-        }
+        shaft_test_offset =
+            (tt_motor_shaft_diameter() + 2 * placeholder_Shaft_Clearance) / 2 +
+            tt_motor_shaft_test_outer_diameter() / 2 +
+            preview_Placeholder_Gap;
+
+        rotate([0, 0, preview_Shaft_Angle])
+            tt_motor_shaft_placeholder();
+        translate([shaft_test_offset, 0, 0])
+            tt_motor_shaft_hole_test(shaft_slot_angle = preview_Shaft_Angle)
+                tt_motor_shaft_placeholder();
+    }
+    else if (preview_Mode == "test_enclosure")
+    {
+        tt_motor_test_enclosure(assembled = false);
+    }
+    else if (preview_Mode == "shaft_test")
+    {
+        tt_motor_shaft_hole_test()
+            tt_motor_shaft_placeholder();
     }
     else if (preview_Mode == "placeholder_minus_preview")
     {
@@ -1106,13 +1090,29 @@ module _tt_motor_scene()
             placeholder_aligned();
         }
     }
+    else if (preview_Mode == "xor")
+    {
+        union()
+        {
+            difference()
+            {
+                placeholder_aligned();
+                preview_aligned();
+            }
+            difference()
+            {
+                preview_aligned();
+                placeholder_aligned();
+            }
+        }
+    }
     else
     {
         assert(
             false,
             str(
                 "Unknown preview_Mode '", preview_Mode,
-                "', expected one of: placeholder, placeholder_shaft, preview, preview_with_wheels, wheel_only, shaft_test, test_enclosure, test_enclosure_assembled, both, xor, placeholder_minus_preview, preview_minus_placeholder"));
+                "', expected one of: both, preview, preview_with_wheels, wheel_only, test_enclosure_assembled, placeholder, placeholder_shaft, test_enclosure, shaft_test, placeholder_minus_preview, preview_minus_placeholder, xor"));
     }
 }
 

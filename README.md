@@ -167,15 +167,15 @@ Open [TT-Motor-Library.scad](TT-Motor-Library.scad) directly in OpenSCAD to tune
 - **`[Placeholder]`** — set default `placeholder_Hole_Length`, `placeholder_Clearance` (housing), `placeholder_Shaft_Clearance` (wheel shaft socket, default `0.1` mm), `placeholder_Shaft_DD_Below_Length` (DD through-hole extension below `Z = 0`, default `20` mm), and `placeholder_Shaft_Gearbox_Clearance` (margin kept between the round shaft collar and the gearbox body, default `1.0` mm).
 - **`[Test Enclosure]`** — set `testEnclosure_Min_Wall_Thickness` (default `2` mm) and `testEnclosure_Wheel_Cylinder_Diameter` (default `12` mm).
 - **`[Preview]`** — set `preview_Placeholder_Gap` (default `10` mm), `preview_Shaft_Angle` (`0`–`360`, default `90` — rotates the wheel shaft and demo wheels in `"preview"`, `"preview_with_wheels"`, and `"both"`, and rotates the cutting shaft placeholder and calibration puck slot in `"placeholder_shaft"`; comparison modes keep `shaft_angle = 90` and `"shaft_test"` keeps `shaft_slot_angle = 0`), `preview_Show_Body` and `preview_Show_Shaft` (both default `true` — toggle body/shaft visibility in `"preview"`, `"preview_with_wheels"`, and `"both"`, and serve as defaults for `tt_motor_preview()`; comparison modes always render both), `preview_Fn` (default `64` — standalone preview resolution), and `preview_Mode`:
-  - `"both"` (**default**) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
-  - `"placeholder"` — shows only the negative-volume cutout (`tt_motor_placeholder()`).
-  - `"placeholder_shaft"` — shows both the vertical cutting shaft placeholder (`tt_motor_shaft_placeholder()`) and the shaft fit calibration puck (`tt_motor_shaft_hole_test()`) side by side, separated by `preview_Placeholder_Gap`.
-  - `"preview"` — shows only the motor model (`tt_motor_preview()`) with its wheel shaft rotated by `preview_Shaft_Angle`.
-  - `"preview_with_wheels"` — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
-  - `"wheel_only"` — shows only the demo wheel at `[0, 0, 0]` for quick inspection.
-  - `"shaft_test"` — shows only the printable DD shaft fit calibration puck (`tt_motor_shaft_hole_test()` cut by `tt_motor_shaft_placeholder()`).
-  - `"test_enclosure"` — shows the two-half printable test enclosure (`tt_motor_test_enclosure(assembled = false)`) laid flat side-by-side for support-free printing.
-  - `"test_enclosure_assembled"` — shows the two-half test enclosure (`tt_motor_test_enclosure(assembled = true)`) assembled around the motor origin with a `0.1` mm seam gap.
-  - `"xor"` — shows the symmetric difference between preview and placeholder at the same origin.
-  - `"placeholder_minus_preview"` — subtracts the motor model from the cutout volume to inspect clearance space around the motor.
-  - `"preview_minus_placeholder"` — subtracts the cutout volume from the motor model to verify nothing sticks out (empty with default dimensions when `clearance >= 0`).
+  - `"both"` (**default**, *Motor & Cutout (both)*) — shows `tt_motor_preview()` (shaft rotated by `preview_Shaft_Angle`) and `tt_motor_placeholder()` side by side, separated by `preview_Placeholder_Gap`.
+  - `"preview"` (*View - Motor*) — shows only the motor model (`tt_motor_preview()`) with its wheel shaft rotated by `preview_Shaft_Angle`.
+  - `"preview_with_wheels"` (*View - Motor + Wheels*) — shows the motor with a spoked demo wheel (DD bore + red `0°` indicator spoke) mounted on both shaft ends, with the shaft and wheels rotated by `preview_Shaft_Angle`.
+  - `"wheel_only"` (*View - Demo Wheel*) — shows only the demo wheel at `[0, 0, 0]` for quick inspection.
+  - `"test_enclosure_assembled"` (*View - Test Box (assembled)*) — shows the two-half test enclosure (`tt_motor_test_enclosure(assembled = true)`) assembled around the motor origin with a `0.1` mm seam gap.
+  - `"placeholder"` (*Cutout - Motor*) — shows only the negative-volume cutout (`tt_motor_placeholder()`).
+  - `"placeholder_shaft"` (*Cutout - Shaft & Puck*) — shows both the vertical cutting shaft placeholder (`tt_motor_shaft_placeholder()`) and the shaft fit calibration puck (`tt_motor_shaft_hole_test()`) side by side, separated by `preview_Placeholder_Gap`.
+  - `"test_enclosure"` (*Print - Test Box (flat)*) — shows the two-half printable test enclosure (`tt_motor_test_enclosure(assembled = false)`) laid flat side-by-side for support-free printing.
+  - `"shaft_test"` (*Print - Shaft Fit*) — shows only the printable DD shaft fit calibration puck (`tt_motor_shaft_hole_test()` cut by `tt_motor_shaft_placeholder()`).
+  - `"placeholder_minus_preview"` (*Check - Clearance Gap*) — subtracts the motor model from the cutout volume to inspect clearance space around the motor.
+  - `"preview_minus_placeholder"` (*Check - Protrusions*) — subtracts the cutout volume from the motor model to verify nothing sticks out (empty with default dimensions when `clearance >= 0`).
+  - `"xor"` (*Check - Fit Diff (XOR)*) — shows the symmetric difference between preview and placeholder at the same origin.
