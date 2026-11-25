@@ -17,6 +17,7 @@ Drop `use <TT-Motor-Library.scad>` into your OpenSCAD file to call `tt_motor_pre
 
 ```openscad
 use <TT-Motor-Library.scad>
+$fn = 64; // Library inherits caller's $fn
 
 // Default motor preview (centered on the wheel shaft)
 rotate([0, -90, 0])
@@ -51,6 +52,7 @@ When designing a wheel module, place its local `[0, 0, 0]` where the round shaft
 
 ```openscad
 use <TT-Motor-Library.scad>
+$fn = 64; // Library inherits caller's $fn
 
 // Same wheel mounted on both shaft ends
 rotate([0, -90, 0])
@@ -86,16 +88,18 @@ rotate([0, -90, 0])
 
 `tt_motor_shaft_placeholder(clearance = placeholder_Shaft_Clearance, dd_length = wheelShaft_DD_Length, round_length = wheel_shaft_round_part_length(), dd_below_length = placeholder_Shaft_DD_Below_Length)` produces a **vertical** negative-volume shaft half for cutting sockets into wheels and hubs (DD flats at `±Y`, curved faces at `±X`): `Z = 0` marks the physical DD shaft tip, the DD section spans `[-dd_below_length, dd_length]` (extending below `Z = 0` by `20` mm by default to cut clean through-DD holes for easy post-print filing; set `dd_below_length = 0` for a blind pocket), and the round collar spans `[dd_length, dd_length + round_length]` (`wheel_shaft_round_part_length() = 11` mm by default). Its default clearance (`placeholder_Shaft_Clearance = 0.1` mm) is separate from the motor housing's `placeholder_Clearance` (`0.5` mm).
 
-`tt_motor_shaft_hole_test(shaft_depth = wheelShaft_DD_Length + tt_motor_shaft_placeholder_round_length(), height = 2 * wheelShaft_DD_Length, outer_diameter = tt_motor_shaft_test_outer_diameter(), hub_diameter = 0, base_height = 2.0, shaft_slot_angle = 0)` prints a compact calibration puck (`12` mm tall by default = `2 * wheelShaft_DD_Length`) with `shaft_depth = 6.65` mm (`6.0` mm DD + `0.65` mm round collar, leaving `1.0` mm clearance to the gearbox body) for tuning `clearance`. It requires **exactly 1 child** (the cutting placeholder):
+`tt_motor_shaft_hole_test(shaft_depth = tt_motor_shaft_dd_length() + tt_motor_shaft_placeholder_round_length(), height = 2 * tt_motor_shaft_dd_length(), outer_diameter = undef, hub_diameter = 0, base_height = 2.0, shaft_slot_angle = 0)` prints a compact calibration puck (`12` mm tall by default = `2 * wheelShaft_DD_Length`) with `shaft_depth = 6.65` mm (`6.0` mm DD + `0.65` mm round collar, leaving `1.0` mm clearance to the gearbox body) for tuning `clearance`. When `outer_diameter` is omitted (`undef`), it defaults to `tt_motor_shaft_test_outer_diameter(hub_diameter = hub_diameter)`. It requires **exactly 1 child** (the cutting placeholder):
 
 ```openscad
 use <TT-Motor-Library.scad>
 $fn = 64; // Library inherits caller's $fn
 
 // Print a quick DD shaft fit calibration puck
-tt_motor_shaft_hole_test(shaft_depth = 6.15, hub_diameter = 11.0)
+tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
     tt_motor_shaft_placeholder(clearance = 0.1);
 ```
+
+> **Through-hole vs. blind pocket:** With the default `dd_below_length = 20` mm, `tt_motor_shaft_placeholder()` cuts a through-DD bore all the way out the bottom of the puck, and `shaft_depth` sets how deep the round collar extends from the top face (`shaft_depth - dd_length`, i.e., `0.65` mm by default). Pass `dd_below_length = 0` to `tt_motor_shaft_placeholder()` if you want a blind pocket of exact depth `shaft_depth` with an internal bottom stop.
 
 > **Resolution (`$fn`) note:** `TT-Motor-Library.scad` does not set a global `$fn` when imported via `use <>`; callers control tessellation resolution with their own `$fn`. Standalone preview uses `preview_Fn` (`64` by default).
 

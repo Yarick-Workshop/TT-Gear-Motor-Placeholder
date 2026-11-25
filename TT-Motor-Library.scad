@@ -115,6 +115,9 @@ function tt_motor_shaft_diameter() =
 
 function tt_motor_shaft_dd_thickness() =
     assert(wheelShaft_DD_Thickness > 0, "wheelShaft_DD_Thickness must be positive")
+    assert(
+        wheelShaft_DD_Thickness <= tt_motor_shaft_diameter(),
+        "wheelShaft_DD_Thickness must not exceed wheelShaft_Diameter")
     wheelShaft_DD_Thickness;
 
 function tt_motor_shaft_dd_length() =
@@ -122,15 +125,18 @@ function tt_motor_shaft_dd_length() =
     wheelShaft_DD_Length;
 
 function tt_motor_shaft_placeholder_round_length(gearbox_clearance = placeholder_Shaft_Gearbox_Clearance) =
-    let(round_len = wheel_shaft_round_part_length() - gearBox_Width / 2 - gearbox_clearance)
+    let(
+        raw_len = wheel_shaft_round_part_length() - gearBox_Width / 2 - gearbox_clearance,
+        round_len = abs(raw_len) < 1e-6 ? 0 : raw_len)
+    assert(gearBox_Width > 0, "gearBox_Width must be positive")
     assert(gearbox_clearance >= 0, "gearbox_clearance must be non-negative")
-    assert(round_len > 0, "gearbox_clearance leaves no exposed round shaft length")
+    assert(round_len >= 0, "gearbox_clearance leaves negative exposed round shaft length")
     round_len;
 
 function tt_motor_shaft_test_outer_diameter(hub_diameter = 0, clearance = placeholder_Shaft_Clearance) =
     assert(hub_diameter >= 0, "hub_diameter must be non-negative")
     assert(clearance >= 0, "clearance must be non-negative")
-    max(hub_diameter > 0 ? hub_diameter + 4 : 0, wheelShaft_Diameter + 2 * clearance + 8);
+    max(hub_diameter > 0 ? hub_diameter + 4 : 0, tt_motor_shaft_diameter() + 2 * clearance + 8);
 
 // pre-calculated values
 motor_Side_Offset = (gearBox_Width - motorBase_Thickness) / 2;
@@ -545,7 +551,7 @@ module tt_motor_placeholder(
 */
 module tt_motor_shaft_placeholder(
     clearance = placeholder_Shaft_Clearance,
-    dd_length = wheelShaft_DD_Length,
+    dd_length = tt_motor_shaft_dd_length(),
     round_length = wheel_shaft_round_part_length(),
     dd_below_length = placeholder_Shaft_DD_Below_Length)
 {
@@ -553,28 +559,27 @@ module tt_motor_shaft_placeholder(
     assert(dd_length > 0, "dd_length must be positive");
     assert(round_length >= 0, "round_length must be non-negative");
     assert(dd_below_length >= 0, "dd_below_length must be non-negative");
-    assert(wheelShaft_Diameter > 0 && wheelShaft_DD_Thickness > 0, "Wheel shaft dimensions must be positive");
-    assert(
-        wheelShaft_DD_Thickness + 2 * clearance <= wheelShaft_Diameter + 2 * clearance,
-        "Effective DD thickness must not exceed effective shaft diameter");
 
-    effective_diameter = wheelShaft_Diameter + 2 * clearance;
-    effective_dd_thickness = wheelShaft_DD_Thickness + 2 * clearance;
+    shaft_diameter = tt_motor_shaft_diameter();
+    dd_thickness = tt_motor_shaft_dd_thickness();
+    effective_diameter = shaft_diameter + 2 * clearance;
+    effective_dd_thickness = dd_thickness + 2 * clearance;
+    has_round_collar = round_length > 1e-6;
 
     union()
     {
         translate([0, 0, -dd_below_length])
             dd_shaft(
-                length = dd_below_length + dd_length + (round_length > 0 ? EPSILON : 0),
+                length = dd_below_length + dd_length + (has_round_collar ? min(EPSILON, round_length) : 0),
                 diameter = effective_diameter,
                 thickness = effective_dd_thickness,
                 center = false);
 
-        if (round_length > 0)
+        if (has_round_collar)
             translate([0, 0, dd_length])
-                cylinder(
-                    d = effective_diameter,
-                    h = round_length,
+                round_end_cylinder(
+                    diameter = effective_diameter,
+                    length = round_length,
                     center = false);
     }
 }
@@ -585,9 +590,9 @@ module tt_motor_shaft_placeholder(
     TODO: support optional M2 retaining screw hole / head recess once added to tt_motor_shaft_placeholder().
 */
 module tt_motor_shaft_hole_test(
-    shaft_depth = wheelShaft_DD_Length + tt_motor_shaft_placeholder_round_length(),
-    height = 2 * wheelShaft_DD_Length,
-    outer_diameter = tt_motor_shaft_test_outer_diameter(),
+    shaft_depth = tt_motor_shaft_dd_length() + tt_motor_shaft_placeholder_round_length(),
+    height = 2 * tt_motor_shaft_dd_length(),
+    outer_diameter = undef,
     hub_diameter = 0,
     base_height = 2.0,
     shaft_slot_angle = 0)
@@ -595,24 +600,33 @@ module tt_motor_shaft_hole_test(
     assert(
         $children == 1,
         str("tt_motor_shaft_hole_test requires exactly 1 child (cutting placeholder), got ", $children));
+
+    shaft_diameter = tt_motor_shaft_diameter();
+    eff_outer_diameter = is_undef(outer_diameter)
+        ? tt_motor_shaft_test_outer_diameter(hub_diameter = hub_diameter)
+        : outer_diameter;
+
     assert(shaft_depth >= 0, "shaft_depth must be non-negative");
     assert(height > 0, "height must be positive");
-    assert(outer_diameter > 0, "outer_diameter must be positive");
+    assert(eff_outer_diameter > shaft_diameter, "outer_diameter must exceed shaft diameter");
     assert(hub_diameter >= 0, "hub_diameter must be non-negative");
     assert(base_height > 0, "base_height must be positive");
     if (hub_diameter > 0)
-        assert(outer_diameter >= hub_diameter, "outer_diameter must be at least hub_diameter");
+    {
+        assert(eff_outer_diameter >= hub_diameter, "outer_diameter must be at least hub_diameter");
+        assert(hub_diameter > shaft_diameter, "hub_diameter must exceed shaft diameter");
+    }
 
     total_height = max(height, shaft_depth);
     test_base_height = min(base_height, total_height);
     test_hub_height = total_height - test_base_height;
-    use_hub_step = hub_diameter > 0 && hub_diameter < outer_diameter && test_hub_height > 0;
+    use_hub_step = hub_diameter > 0 && hub_diameter < eff_outer_diameter && test_hub_height > 0;
 
     difference()
     {
         union()
         {
-            cylinder(h = use_hub_step ? test_base_height : total_height, d = outer_diameter);
+            cylinder(h = use_hub_step ? test_base_height : total_height, d = eff_outer_diameter);
 
             if (use_hub_step)
                 translate([0, 0, test_base_height - EPSILON])
@@ -622,11 +636,25 @@ module tt_motor_shaft_hole_test(
         if (shaft_depth > 0)
         {
             is_through_socket = shaft_depth >= total_height - EPSILON * 0.5;
-            cut_start_z = is_through_socket ? -EPSILON : total_height - shaft_depth;
+            cut_start_z = total_height - shaft_depth;
 
-            translate([0, 0, cut_start_z])
-                rotate([0, 0, shaft_slot_angle])
-                    children(0);
+            rotate([0, 0, shaft_slot_angle])
+                union()
+                {
+                    translate([0, 0, cut_start_z])
+                    {
+                        children(0);
+                        translate([0, 0, EPSILON])
+                            children(0);
+                    }
+
+                    if (is_through_socket)
+                        translate([0, 0, -EPSILON])
+                            linear_extrude(height = 2 * EPSILON)
+                                projection(cut = true)
+                                    translate([0, 0, -cut_start_z - EPSILON / 2])
+                                        children(0);
+                }
         }
     }
 }
@@ -767,7 +795,7 @@ module _preview_demo_wheel(diameter = 34, width = 8)
     tire_thickness = 2.5;
     rim_outer_d = diameter - 2 * tire_thickness;
     rim_inner_d = rim_outer_d - 3;
-    hub_diameter = max(10, wheelShaft_Diameter + 3);
+    hub_diameter = max(10, tt_motor_shaft_diameter() + 3);
     spoke_count = 5;
     spoke_width = 2.4;
     rim_thickness = width - 1.5;
@@ -776,7 +804,6 @@ module _preview_demo_wheel(diameter = 34, width = 8)
 
     assert(diameter > 0 && width > 1.5 + 2 * EPSILON, "Demo wheel width must exceed 1.5 + 2 * EPSILON");
     assert(rim_inner_d > hub_diameter, "Demo wheel diameter is too small for the inner rim and hub");
-    assert(wheelShaft_Diameter > 0 && wheelShaft_DD_Thickness > 0, "Wheel shaft dimensions must be positive");
 
     // outer rubber tire with radial tread ribs
     color("#2b2b2b")
@@ -800,9 +827,11 @@ module _preview_demo_wheel(diameter = 34, width = 8)
         difference()
         {
             cylinder(d = hub_diameter, h = width);
-            translate([0, 0, wheelShaft_DD_Length + tt_motor_shaft_placeholder_round_length()])
+            translate([0, 0, tt_motor_shaft_dd_length()])
                 rotate([180, 0, 0])
-                    tt_motor_shaft_placeholder();
+                    tt_motor_shaft_placeholder(
+                        round_length = EPSILON,
+                        dd_below_length = max(width, placeholder_Shaft_DD_Below_Length));
         }
 
         // inner rim
@@ -826,6 +855,8 @@ module _preview_demo_wheel(diameter = 34, width = 8)
 // the main rendering part
 module _tt_motor_scene()
 {
+    assert(preview_Fn >= 3, "preview_Fn must be at least 3");
+
     module preview_aligned(
         with_wheels = false,
         angle = 90,
@@ -857,7 +888,7 @@ module _tt_motor_scene()
     else if (preview_Mode == "placeholder_shaft")
     {
         shaft_test_offset =
-            (wheelShaft_Diameter + 2 * placeholder_Shaft_Clearance) / 2 +
+            (tt_motor_shaft_diameter() + 2 * placeholder_Shaft_Clearance) / 2 +
             tt_motor_shaft_test_outer_diameter() / 2 +
             preview_Placeholder_Gap;
 
