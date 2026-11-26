@@ -72,6 +72,8 @@ rotate([0, -90, 0])
         my_wheel();
 ```
 
+> **Visibility & seam options (`tt_motor_preview`):** `show_body` and `show_shaft` (both default `preview_Show_Body` / `preview_Show_Shaft` = `true`) toggle the motor body and wheel shaft independently. `show_seam` (default `true`) cuts a cosmetic `0.1` mm groove along `Z = 0` between the gearbox halves; pass `false` for clean silhouettes, 2D projections, or boolean operations.
+
 > **Clearance tip (`-Z` side pin):** The gearbox has an alignment pin on the `-Z` side (`Y = 11.2` mm behind the shaft center / `22.2` mm from the gearbox front, `Ø 4` mm, spanning `9.2`–`13.2` mm from the shaft center) that sticks out `0.27` mm past the `-Z` wheel mounting plane (`Z = -11.27` mm vs `-11.0` mm). If your `-Z` wheel has a flat back larger than `18.4` mm in diameter, recess the back face by at least `0.3` mm outside `Ø 18.4` mm or shift it outward along `+Z`.
 
 ## Helper Functions
@@ -153,6 +155,14 @@ tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
 - **`gap`** (default `preview_Gap = 10`) — non-negative spacing (in mm) between the side and top views when `view = "both"`.
 - **`pin_ring_thickness`** (default `0.4`) — radial thickness (in mm) of the side-view alignment pin outline ring; must be positive and strictly less than `gearBox_Pin_Diameter / 2` (when `gearBox_Pin_Diameter > 0`).
 - **`origin_lengthwise`, `origin_heightwise`** (default `origin_Lengthwise`, `origin_Heightwise`) — `origin_lengthwise` shifts `Y` in both views; `origin_heightwise` shifts `X` in `view = "side"` only and does **not** affect `view = "top"` (the heightwise axis is projected away in the top view).
+
+```openscad
+use <TT-Motor-Library.scad>
+$fn = 64; // Required for smooth circular holes/roundings in SVG/DXF exports
+
+tt_motor_projection();              // Side & top views side by side
+tt_motor_projection(view = "side"); // Origin-aligned side profile only
+```
 
 > **Performance note:** `projection()` triggers full CGAL evaluation even during OpenSCAD F5 preview, so rendering `view = "both"` at `$fn = 64` can take ~60–75 s (OpenSCAD 2021.01). Standalone `preview_Mode = "projections"` logs a console `WARNING:` reminder; lower `$fn` / `preview_Fn` or adjust Customizer settings in another mode first.
 

@@ -485,8 +485,16 @@ module tt_motor_preview(
 function _tt_motor_placeholder_motor_rear_y() =
     max(motor_Offset, motor_Offset - belt_From_Motor_Bottom_Offset + belt_Thickness);
 
-function _tt_motor_placeholder_motor_box_height() =
-    max(gearBox_Height, belt_Ring_External_Diameter, belt_Buckle_Width, belt_Width, hook_Depth);
+function _tt_motor_body_height() =
+    max(
+        gearBox_Height,
+        belt_Ring_External_Diameter,
+        belt_Buckle_Width,
+        belt_Width,
+        hook_Depth,
+        motor130_body_diameter());
+
+function _tt_motor_placeholder_motor_box_height() = _tt_motor_body_height();
 
 function _tt_motor_placeholder_extents(clearance = placeholder_Clearance) =
     let(
@@ -690,14 +698,7 @@ module tt_motor_test_enclosure(
 }
 
 function _tt_motor_preview_half_height() =
-    max(
-        gearBox_Height,
-        mountingHoleBox_Width,
-        belt_Ring_External_Diameter,
-        belt_Buckle_Width,
-        belt_Width,
-        hook_Depth,
-        motor130_body_diameter()) / 2;
+    max(_tt_motor_body_height(), mountingHoleBox_Width) / 2;
 
 /*
     2D orthographic projections of tt_motor_preview() onto the X-Y plane (for inspection or SVG/DXF export).
@@ -728,10 +729,16 @@ module tt_motor_projection(
         gearBox_Pin_Diameter <= 0 || pin_ring_thickness < gearBox_Pin_Diameter / 2,
         "pin_ring_thickness must be less than gearBox_Pin_Diameter / 2");
 
+    if ($fn < 32)
+        echo(str(
+            "WARNING: tt_motor_projection(): $fn is ", $fn,
+            " (< 32); circular holes and corner roundings may export as coarse polygons. Set e.g. $fn = 64."));
+
     origin_x = origin_heightwise_offset(origin_heightwise);
     origin_y = origin_lengthwise_offset(origin_lengthwise);
 
     side_half_x = _tt_motor_preview_half_height();
+    // rotate([0, -90, 0]) maps local Z -> X' = -Z, so top view min X = -(max local Z)
     top_min_x = -_tt_motor_preview_z_extents(show_body = true, show_shaft = true)[1];
     top_offset_x = (view == "both") ? (origin_x + side_half_x - top_min_x + gap) : 0;
 
