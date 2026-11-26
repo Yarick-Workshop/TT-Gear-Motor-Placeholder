@@ -10,6 +10,8 @@
         - https://www.makerstore.com.au/product/elec-130motor-dc6v/
 */
 
+function motor130_body_diameter() = 20;
+
 // TODO, polish!
 module motor130_preview()
 {
@@ -24,7 +26,7 @@ module motor130_preview()
     plastic_bearing_holder_thickness = 8.9;
     plastic_bearing_holder_bottom_round_radius = 0.5;
 
-    motor_body_diameter = 20;
+    motor_body_diameter = motor130_body_diameter();
     motor_body_thickness = 15.1;
 
     motor_body_plastic_hight = 5;
