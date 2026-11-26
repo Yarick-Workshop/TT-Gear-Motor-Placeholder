@@ -93,7 +93,7 @@ testEnclosure_Wheel_Cylinder_Diameter = 12;
 
 /* [Preview] */
 preview_Mode = "both"; // [both:Motor & Cutout, preview:View - Motor, preview_with_wheels:View - Motor + Wheels, wheel_only:View - Demo Wheel, test_enclosure_assembled:View - Test Box (assembled), projections:2D - Projections (Side & Top), placeholder:Cutout - Motor, placeholder_shaft:Cutout - Shaft & Puck, test_enclosure:Print - Test Box (flat), shaft_test:Print - Shaft Fit, placeholder_minus_preview:Check - Clearance Gap, preview_minus_placeholder:Check - Protrusions, xor:Check - Fit Diff (XOR)]
-preview_Placeholder_Gap = 10;
+preview_Gap = 10;
 preview_Shaft_Angle = 90; // [0:1:360]
 preview_Show_Body = true;
 preview_Show_Shaft = true;
@@ -149,18 +149,27 @@ motor_Box_Width = max(
     motorBase_Thickness + 2 * (hook_Internal_Height + hook_Top_Thickness),
     motorBase_Thickness + 2 * belt_Thickness + EPSILON,
     belt_Ring_External_Diameter);
-preview_Pos_X_Extent = max(
-    preview_Show_Shaft ? wheelShaft_Length / 2 : 0,
-    preview_Show_Body ? max(
-        gearBox_Width / 2 + gearBox_Pin_Height,
-        mountingHoleBox_Height / 2,
-        motor_Box_Width / 2 - motor_Side_Offset) : 0);
+function _tt_motor_preview_z_extents(show_body = true, show_shaft = true) =
+    let(
+        shaft_min_z = show_shaft ? -wheelShaft_Length / 2 : 0,
+        shaft_max_z = show_shaft ? wheelShaft_Length / 2 : 0,
+        body_min_z = show_body ? min(
+            -(gearBox_Width / 2 + max(0, gearBox_Pin_Height)),
+            -mountingHoleBox_Height / 2,
+            motor_Side_Offset - motor_Box_Width / 2) : 0,
+        body_max_z = show_body ? max(
+            gearBox_Width / 2,
+            mountingHoleBox_Height / 2,
+            motor_Side_Offset + motor_Box_Width / 2) : 0)
+    [min(shaft_min_z, body_min_z), max(shaft_max_z, body_max_z)];
+
+preview_Pos_X_Extent = -_tt_motor_preview_z_extents(preview_Show_Body, preview_Show_Shaft)[0];
 placeholder_Neg_X_Extent = max(
     placeholder_Hole_Length / 2,
     gearBox_Width / 2 + placeholder_Clearance,
     mountingHoleBox_Height / 2 + placeholder_Clearance,
     motor_Side_Offset + motor_Box_Width / 2 + placeholder_Clearance);
-preview_Placeholder_Offset = preview_Pos_X_Extent + placeholder_Neg_X_Extent + preview_Placeholder_Gap;
+preview_Placeholder_Offset = preview_Pos_X_Extent + placeholder_Neg_X_Extent + preview_Gap;
 
 function origin_lengthwise_offset(mode) =
     mode == "shaft" ? -wheelShaft_Offset :
@@ -339,11 +348,13 @@ module tt_motor_preview(
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise,
     show_body = preview_Show_Body,
-    show_shaft = preview_Show_Shaft)
+    show_shaft = preview_Show_Shaft,
+    show_seam = true)
 {
     assert($children <= 2, str("tt_motor_preview expects 0, 1, or 2 wheel children, got ", $children));
     assert(is_bool(show_body), "show_body must be a boolean");
     assert(is_bool(show_shaft), "show_shaft must be a boolean");
+    assert(is_bool(show_seam), "show_seam must be a boolean");
 
     origin_x = origin_heightwise_offset(origin_heightwise);
     origin_y = origin_lengthwise_offset(origin_lengthwise);
@@ -409,10 +420,13 @@ module tt_motor_preview(
                     }
 
                     // separate 2 halves of the gearbox and motor base along Z = 0
-                    split_sx = max(gearBox_Height, mountingHoleBox_Width, hook_Depth) + 2 * EPSILON;
-                    split_sy = mountingHoleBox_Length + gearBox_Length + motorBase_Length + 2 * EPSILON;
-                    translate([0, (gearBox_Length + motorBase_Length - mountingHoleBox_Length) / 2, 0])
-                        cube([split_sx, split_sy, 0.1], center = true);
+                    if (show_seam)
+                    {
+                        split_sx = max(gearBox_Height, mountingHoleBox_Width, hook_Depth) + 2 * EPSILON;
+                        split_sy = mountingHoleBox_Length + gearBox_Length + motorBase_Length + 2 * EPSILON;
+                        translate([0, (gearBox_Length + motorBase_Length - mountingHoleBox_Length) / 2, 0])
+                            cube([split_sx, split_sy, 0.1], center = true);
+                    }
                 }
 
                 // 130 motor
@@ -578,7 +592,7 @@ module tt_motor_test_enclosure(
     hole_diameter = mountingHole_Diameter,
     part = "both",
     assembled = false,
-    gap = preview_Placeholder_Gap,
+    gap = preview_Gap,
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise)
 {
@@ -675,42 +689,50 @@ module tt_motor_test_enclosure(
     }
 }
 
+function _tt_motor_preview_half_height() =
+    max(
+        gearBox_Height,
+        mountingHoleBox_Width,
+        belt_Ring_External_Diameter,
+        belt_Buckle_Width,
+        belt_Width,
+        hook_Depth,
+        motor130_body_diameter()) / 2;
+
 /*
     2D orthographic projections of tt_motor_preview() onto the X-Y plane (for inspection or SVG/DXF export).
     view:
       - "both" (default): side and top projections placed side-by-side on the same page along X separated by `gap`
-      - "side": side profile (shaft hidden so the shaft bore is open; side pin shown as an outline ring cutout)
-      - "top": top-down profile (matching rotate([0, -90, 0]) top view; shows dual DD shafts, side pin profile, belt, and motor)
-    `shaft_angle` defaults to 0 so the DD shaft flats (±Y) are visible in the top projection.
+        (the 2D origin belongs to the side view; export "side" and "top" separately for origin-aligned CAD drawings)
+      - "side": side profile (shaft hidden so the shaft bore is open; side pin shown as an outline ring marker cutout)
+      - "top": top-down profile (matching rotate([0, -90, 0]) top view; shows dual DD shafts, side pin profile, belt, and motor;
+        unaffected by `origin_heightwise`)
+    `shaft_angle` only affects the top view and defaults to 0 so the DD shaft flats (±Y) are visible in profile.
+    `pin_ring_thickness` must satisfy 0 < pin_ring_thickness < gearBox_Pin_Diameter / 2 (when gearBox_Pin_Diameter > 0).
 */
 module tt_motor_projection(
     view = "both",
     shaft_angle = 0,
     origin_lengthwise = origin_Lengthwise,
     origin_heightwise = origin_Heightwise,
-    gap = preview_Placeholder_Gap,
+    gap = preview_Gap,
     pin_ring_thickness = 0.4)
 {
     assert(
         view == "both" || view == "side" || view == "top",
         str("Unknown view '", view, "', expected one of: both, side, top"));
-    assert(gap >= 0, "gap must be non-negative");
-    assert(pin_ring_thickness > 0, "pin_ring_thickness must be positive");
+    assert(is_num(shaft_angle), "shaft_angle must be a number");
+    assert(is_num(gap) && gap >= 0, "gap must be a non-negative number");
+    assert(is_num(pin_ring_thickness) && pin_ring_thickness > 0, "pin_ring_thickness must be a positive number");
+    assert(
+        gearBox_Pin_Diameter <= 0 || pin_ring_thickness < gearBox_Pin_Diameter / 2,
+        "pin_ring_thickness must be less than gearBox_Pin_Diameter / 2");
 
     origin_x = origin_heightwise_offset(origin_heightwise);
     origin_y = origin_lengthwise_offset(origin_lengthwise);
 
-    side_half_x = max(
-        gearBox_Height,
-        mountingHoleBox_Width,
-        _tt_motor_placeholder_motor_box_height(),
-        gearBox_Pin_Diameter,
-        20) / 2;
-    top_min_x = -max(
-        wheelShaft_Length / 2,
-        gearBox_Width / 2,
-        mountingHoleBox_Height / 2,
-        motor_Side_Offset + motor_Box_Width / 2);
+    side_half_x = _tt_motor_preview_half_height();
+    top_min_x = -_tt_motor_preview_z_extents(show_body = true, show_shaft = true)[1];
     top_offset_x = (view == "both") ? (origin_x + side_half_x - top_min_x + gap) : 0;
 
     if (view == "both" || view == "side")
@@ -718,11 +740,11 @@ module tt_motor_projection(
         {
             projection(cut = false)
                 tt_motor_preview(
-                    shaft_angle = shaft_angle,
                     origin_lengthwise = origin_lengthwise,
                     origin_heightwise = origin_heightwise,
                     show_body = true,
-                    show_shaft = false);
+                    show_shaft = false,
+                    show_seam = false);
 
             if (gearBox_Pin_Diameter > 0 && gearBox_Pin_Height > 0)
             {
@@ -731,8 +753,7 @@ module tt_motor_projection(
                     difference()
                     {
                         circle(d = gearBox_Pin_Diameter);
-                        if (pin_inner_d > 0)
-                            circle(d = pin_inner_d);
+                        circle(d = pin_inner_d);
                     }
             }
         }
@@ -746,7 +767,8 @@ module tt_motor_projection(
                         origin_lengthwise = origin_lengthwise,
                         origin_heightwise = origin_heightwise,
                         show_body = true,
-                        show_shaft = true);
+                        show_shaft = true,
+                        show_seam = false);
 }
 
 /*
@@ -1125,6 +1147,9 @@ module _tt_motor_scene()
     }
     else if (preview_Mode == "projections")
     {
+        echo(str(
+            "WARNING: preview_Mode=\"projections\" uses projection(), which forces full CGAL rendering even in F5 preview ",
+            "(may take ~1 minute at preview_Fn = 64). Lower preview_Fn or adjust parameters in another mode first."));
         tt_motor_projection(view = "both", shaft_angle = 0);
     }
     else if (preview_Mode == "placeholder")
@@ -1136,7 +1161,7 @@ module _tt_motor_scene()
         shaft_test_offset =
             (tt_motor_shaft_diameter() + 2 * placeholder_Shaft_Clearance) / 2 +
             tt_motor_shaft_test_outer_diameter() / 2 +
-            preview_Placeholder_Gap;
+            preview_Gap;
 
         rotate([0, 0, preview_Shaft_Angle])
             tt_motor_shaft_placeholder();
