@@ -709,7 +709,7 @@ function _tt_motor_preview_half_height() =
       - "top": top-down profile (matching rotate([0, -90, 0]) top view; shows dual DD shafts, side pin profile, belt, and motor;
         unaffected by `origin_heightwise`)
     `shaft_angle` only affects the top view and defaults to 0 so the DD shaft flats (±Y) are visible in profile.
-    `pin_ring_thickness` must satisfy 0 < pin_ring_thickness < gearBox_Pin_Diameter / 2 (when gearBox_Pin_Diameter > 0).
+    `pin_ring_thickness` must satisfy 0 < pin_ring_thickness < gearBox_Pin_Diameter / 2 (when gearBox_Pin_Diameter > 0 && gearBox_Pin_Height > 0).
 */
 module tt_motor_projection(
     view = "both",
@@ -725,14 +725,15 @@ module tt_motor_projection(
     assert(is_num(shaft_angle), "shaft_angle must be a number");
     assert(is_num(gap) && gap >= 0, "gap must be a non-negative number");
     assert(is_num(pin_ring_thickness) && pin_ring_thickness > 0, "pin_ring_thickness must be a positive number");
+    draw_pin_ring = gearBox_Pin_Diameter > 0 && gearBox_Pin_Height > 0;
     assert(
-        gearBox_Pin_Diameter <= 0 || pin_ring_thickness < gearBox_Pin_Diameter / 2,
+        !draw_pin_ring || pin_ring_thickness < gearBox_Pin_Diameter / 2,
         "pin_ring_thickness must be less than gearBox_Pin_Diameter / 2");
 
-    if ($fn < 32)
+    if (($fn > 0 && $fn < 32) || ($fn == 0 && ($fa > 11.25 || $fs > 0.3)))
         echo(str(
-            "WARNING: tt_motor_projection(): $fn is ", $fn,
-            " (< 32); circular holes and corner roundings may export as coarse polygons. Set e.g. $fn = 64."));
+            "WARNING: tt_motor_projection(): low curve resolution ($fn=", $fn, ", $fa=", $fa, ", $fs=", $fs,
+            "); circular holes and corner roundings may export as coarse polygons. Set e.g. $fn = 64."));
 
     origin_x = origin_heightwise_offset(origin_heightwise);
     origin_y = origin_lengthwise_offset(origin_lengthwise);
@@ -753,7 +754,7 @@ module tt_motor_projection(
                     show_shaft = false,
                     show_seam = false);
 
-            if (gearBox_Pin_Diameter > 0 && gearBox_Pin_Height > 0)
+            if (draw_pin_ring)
             {
                 pin_inner_d = gearBox_Pin_Diameter - 2 * pin_ring_thickness;
                 translate([origin_x, origin_y + gearBox_Pin_Offset])

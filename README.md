@@ -153,7 +153,7 @@ tt_motor_shaft_hole_test(shaft_depth = 6.65, hub_diameter = 11.0)
 - **`view = "top"`** — top-down profile (matching `rotate([0, -90, 0])`) showing both wheel shafts, the protruding alignment pin profile, front lug, belt/hooks, and 130 motor.
 - **`shaft_angle`** (default `0`) — rotates the wheel shaft in the **top view only** (ignored in `view = "side"` where the shaft is hidden). Keep the default `0` so the DD shaft flats (`±Y`) remain visible in profile.
 - **`gap`** (default `preview_Gap = 10`) — non-negative spacing (in mm) between the side and top views when `view = "both"`.
-- **`pin_ring_thickness`** (default `0.4`) — radial thickness (in mm) of the side-view alignment pin outline ring; must be positive and strictly less than `gearBox_Pin_Diameter / 2` (when `gearBox_Pin_Diameter > 0`).
+- **`pin_ring_thickness`** (default `0.4`) — radial thickness (in mm) of the side-view alignment pin outline ring; must be positive and strictly less than `gearBox_Pin_Diameter / 2` (when `gearBox_Pin_Diameter > 0` and `gearBox_Pin_Height > 0`).
 - **`origin_lengthwise`, `origin_heightwise`** (default `origin_Lengthwise`, `origin_Heightwise`) — `origin_lengthwise` shifts `Y` in both views; `origin_heightwise` shifts `X` in `view = "side"` only and does **not** affect `view = "top"` (the heightwise axis is projected away in the top view).
 
 ```openscad
